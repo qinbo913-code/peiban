@@ -1,0 +1,955 @@
+
+• <!doctype html>
+  <html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#F9F5F0" />
+    <title>职场坏情绪回收站 (Mood Recycler V3.0)</title>
+    <style>
+      :root{
+        --bg: #F9F5F0;
+        --ink: #2b2a28;
+        --muted: rgba(43,42,40,.62);
+        --card: rgba(255,255,255,.74);
+        --card-solid: #ffffff;
+        --line: rgba(43,42,40,.10);
+        --shadow: 0 18px 45px rgba(24, 20, 12, .10);
+        --shadow-soft: 0 10px 28px rgba(24, 20, 12, .08);
+        --radius: 22px;
+
+        --blob-size: min(52vw, 320px);
+        --stage-h: min(58vh, 520px);
+
+        --focus: rgba(255, 146, 186, .35);
+        --btn: #2b2a28;
+        --btn-ink: #fff;
+        --btn-hover: #1f1e1c;
+
+        --a1: #ff9ac4;
+        --a2: #ffd3e3;
+
+        --m1: #82efc7;
+        --m2: #d1fff0;
+
+        --e1: #7b8796;
+        --e2: #b9c3cf;
+
+        --g1: #f6d277;
+        --g2: #fff0b8;
+        --g3: #e7b64b;
+
+        --safeTop: env(safe-area-inset-top, 0px);
+        --safeBottom: env(safe-area-inset-bottom, 0px);
+      }
+
+      *{ box-sizing: border-box; }
+      html,body{ height:100%; }
+      body{
+        margin:0;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC","Hiragino Sans GB","Microsoft
+  YaHei", "Noto Sans CJK SC", Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+        color: var(--ink);
+        background: var(--bg);
+        overflow-x:hidden;
+      }
+
+      /* Warm oatmeal + soft light spots */
+      .bg{
+        position: fixed;
+        inset: 0;
+        pointer-events:none;
+        z-index:0;
+        background:
+          radial-gradient(65vmin 45vmin at 18% 18%, rgba(255, 214, 191,.65), transparent 60%),
+          radial-gradient(60vmin 45vmin at 78% 26%, rgba(255, 181, 214,.40), transparent 62%),
+          radial-gradient(55vmin 45vmin at 65% 78%, rgba(185, 255, 232,.36), transparent 65%),
+          radial-gradient(60vmin 50vmin at 28% 82%, rgba(205, 216, 255,.26), transparent 62%),
+          linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,0));
+        filter: blur(0px);
+      }
+
+      .wrap{
+        position: relative;
+        z-index:1;
+        min-height: 100%;
+        display:flex;
+        flex-direction: column;
+        align-items:center;
+        padding: calc(18px + var(--safeTop)) 18px calc(22px + var(--safeBottom));
+        gap: 14px;
+      }
+
+      header{
+        width: min(880px, 100%);
+        display:flex;
+        align-items:flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .title{
+        display:flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      h1{
+        margin:0;
+        font-size: 18px;
+        font-weight: 760;
+        letter-spacing: .4px;
+      }
+      .sub{
+        margin:0;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+      .chip{
+        flex: 0 0 auto;
+        align-self: flex-start;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.55);
+        border: 1px solid rgba(0,0,0,.06);
+        box-shadow: 0 10px 24px rgba(24, 20, 12, .06);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        font-size: 12px;
+        color: rgba(43,42,40,.72);
+        user-select:none;
+        white-space: nowrap;
+      }
+
+      .stage{
+        width: min(880px, 100%);
+        height: var(--stage-h);
+        min-height: 360px;
+        border-radius: calc(var(--radius) + 10px);
+        background: rgba(255,255,255,.50);
+        border: 1px solid rgba(0,0,0,.06);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        position: relative;
+        overflow: hidden;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      }
+
+      .stage::before{
+        content:"";
+        position:absolute;
+        inset: -40%;
+        background:
+          radial-gradient(closest-side at 25% 25%, rgba(255,255,255,.75), transparent 68%),
+          radial-gradient(closest-side at 75% 40%, rgba(255,255,255,.55), transparent 70%),
+          radial-gradient(closest-side at 45% 80%, rgba(255,255,255,.45), transparent 72%);
+        transform: rotate(8deg);
+        opacity: .85;
+      }
+
+      .hint{
+        position:absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 14px;
+        display:flex;
+        justify-content: space-between;
+        align-items:center;
+        gap: 10px;
+        pointer-events:none;
+        color: rgba(43,42,40,.55);
+        font-size: 12px;
+      }
+      .hint b{
+        color: rgba(43,42,40,.72);
+        font-weight: 700;
+      }
+
+      /* Mood Blob */
+      .blob-wrap{
+        position: relative;
+        width: var(--blob-size);
+        height: var(--blob-size);
+        display:grid;
+        place-items:center;
+        transform: translateZ(0);
+        z-index:2;
+      }
+
+      .blob{
+        width: 100%;
+        height: 100%;
+        border-radius: 42% 58% 55% 45% / 55% 42% 58% 45%;
+        box-shadow:
+          0 24px 60px rgba(24, 20, 12, .16),
+          inset 0 18px 38px rgba(255,255,255,.26);
+        position: relative;
+        overflow: visible;
+        transform-origin: 50% 60%;
+        filter: saturate(1.02);
+        animation:
+          blobMorph 7.2s ease-in-out infinite,
+          blobFloat 6.5s ease-in-out infinite;
+        will-change: transform, border-radius, filter;
+      }
+
+      .blob::after{
+        /* soft outer glow ring */
+        content:"";
+        position:absolute;
+        inset: -26px;
+        border-radius: inherit;
+        background: radial-gradient(closest-side, rgba(255,255,255,.30), transparent 70%);
+        filter: blur(12px);
+        opacity:.85;
+        pointer-events:none;
+        mix-blend-mode: screen;
+      }
+
+      .mouth{
+        position:absolute;
+        left: 50%;
+        top: 56%;
+        width: 44%;
+        height: 20%;
+        transform: translate(-50%, -50%) rotate(-2deg);
+        border-radius: 999px;
+        background: rgba(25, 20, 18, .16);
+        box-shadow:
+          inset 0 8px 16px rgba(0,0,0,.12),
+          0 10px 20px rgba(0,0,0,.10);
+        opacity:.92;
+        filter: blur(.0px);
+        overflow:hidden;
+      }
+      .mouth::before{
+        content:"";
+        position:absolute;
+        inset: 14% 10%;
+        border-radius: 999px;
+        background: rgba(255,255,255,.18);
+        opacity:.65;
+        transform: translateY(-4%);
+      }
+      .mouth::after{
+        content:"";
+        position:absolute;
+        left: 18%;
+        right: 18%;
+        bottom: -40%;
+        height: 90%;
+        border-radius: 999px;
+        background: rgba(255, 110, 150, .18);
+        filter: blur(0px);
+        opacity: .85;
+        transform: rotate(2deg);
+      }
+
+      /* Swallow: blob + mouth */
+      .blob.swallowing{
+        animation:
+          blobMorph 4.8s ease-in-out infinite,
+          blobFloat 6.5s ease-in-out infinite,
+          gulp 980ms cubic-bezier(.2,.9,.18,1) 1;
+      }
+      .blob.swallowing .mouth{
+        animation: mouthOpen 980ms cubic-bezier(.2,.9,.18,1) 1;
+      }
+
+      @keyframes blobMorph{
+        0%   { border-radius: 42% 58% 55% 45% / 55% 42% 58% 45%; }
+        25%  { border-radius: 55% 45% 38% 62% / 48% 54% 46% 52%; }
+        50%  { border-radius: 46% 54% 62% 38% / 62% 44% 56% 38%; }
+        75%  { border-radius: 38% 62% 52% 48% / 44% 62% 38% 56%; }
+        100% { border-radius: 42% 58% 55% 45% / 55% 42% 58% 45%; }
+      }
+      @keyframes blobFloat{
+        0%,100% { transform: translateY(0px) scale(1.00); }
+        50%     { transform: translateY(-10px) scale(1.01); }
+      }
+      @keyframes gulp{
+        0%   { transform: translateY(0px) scale(1.00); filter: saturate(1.02); }
+        35%  { transform: translateY(-6px) scale(1.10); filter: saturate(1.12); }
+        65%  { transform: translateY(2px) scale(0.96); filter: saturate(1.05); }
+        100% { transform: translateY(0px) scale(1.00); filter: saturate(1.02); }
+      }
+      @keyframes mouthOpen{
+        0%   { transform: translate(-50%, -50%) scaleX(1) scaleY(.85) rotate(-2deg); opacity:.86; }
+        35%  { transform: translate(-50%, -50%) scaleX(1.05) scaleY(1.55) rotate(-2deg); opacity:.95; }
+        65%  { transform: translate(-50%, -50%) scaleX(.98) scaleY(.72) rotate(-2deg); opacity:.90; }
+        100% { transform: translate(-50%, -50%) scaleX(1) scaleY(.85) rotate(-2deg); opacity:.86; }
+      }
+
+      /* Skins */
+      .skin-a{
+        background:
+          radial-gradient(60% 60% at 30% 25%, rgba(255,255,255,.35), transparent 58%),
+          linear-gradient(135deg, var(--a1), var(--a2));
+      }
+      .skin-m{
+        background:
+          radial-gradient(60% 60% at 30% 25%, rgba(255,255,255,.35), transparent 58%),
+          linear-gradient(135deg, var(--m1), var(--m2));
+      }
+      .skin-e{
+        background:
+          radial-gradient(60% 60% at 30% 25%, rgba(255,255,255,.28), transparent 58%),
+          linear-gradient(135deg, var(--e1), var(--e2));
+        filter: saturate(.95);
+      }
+      .skin-ssr{
+        background:
+          radial-gradient(68% 68% at 28% 22%, rgba(255,255,255,.40), transparent 58%),
+          linear-gradient(135deg, var(--g1), var(--g2) 55%, var(--g3));
+        box-shadow:
+          0 24px 70px rgba(231, 182, 75, .22),
+          0 24px 60px rgba(24, 20, 12, .14),
+          inset 0 18px 38px rgba(255,255,255,.26);
+      }
+
+      /* SSR sparkles */
+      .sparkles{
+        position:absolute;
+        inset: -42px;
+        pointer-events:none;
+        opacity: 0;
+        transition: opacity .25s ease;
+        z-index: 3;
+      }
+      .sparkles.on{ opacity: 1; }
+      .sparkles span{
+        position:absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: radial-gradient(circle at 35% 35%, rgba(255,255,255,1), rgba(255,255,255,.0) 70%);
+        box-shadow:
+          0 0 0 0 rgba(255, 224, 160, .0),
+          0 0 16px rgba(255, 231, 180, .55);
+        filter: blur(.0px);
+        opacity: .0;
+        transform: translateZ(0);
+        animation: twinkle 1.6s ease-in-out infinite;
+        will-change: transform, opacity;
+      }
+      @keyframes twinkle{
+        0%,100%{ opacity: .05; transform: scale(.65) rotate(0deg); box-shadow: 0 0 16px rgba(255, 231, 180, .30); }
+        45%{ opacity: .95; transform: scale(1.25) rotate(18deg); box-shadow: 0 0 26px rgba(255, 231, 180, .68); }
+        65%{ opacity: .25; transform: scale(.85) rotate(-10deg); box-shadow: 0 0 18px rgba(255, 231, 180, .44); }
+      }
+
+      /* Input area */
+      .panel{
+        width: min(880px, 100%);
+        display:flex;
+        gap: 12px;
+        align-items: stretch;
+      }
+      .input{
+        flex: 1 1 auto;
+        background: rgba(255,255,255,.68);
+        border: 1px solid rgba(0,0,0,.07);
+        box-shadow: var(--shadow-soft);
+        border-radius: 18px;
+        padding: 12px 14px;
+        display:flex;
+        align-items:center;
+        gap: 10px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      .input .dot{
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(255,154,196,1), rgba(255,210,224,1));
+        box-shadow: 0 8px 18px rgba(255, 146, 186, .35);
+        flex: 0 0 auto;
+      }
+      input[type="text"]{
+        width:100%;
+        border:0;
+        outline:0;
+        background: transparent;
+        font-size: 14px;
+        color: var(--ink);
+        letter-spacing: .2px;
+      }
+      input::placeholder{ color: rgba(43,42,40,.42); }
+
+      .btn{
+        flex: 0 0 auto;
+        border: 0;
+        border-radius: 18px;
+        padding: 12px 16px;
+        min-width: 122px;
+        background: var(--btn);
+        color: var(--btn-ink);
+        box-shadow: 0 14px 30px rgba(24, 20, 12, .18);
+        font-weight: 760;
+        letter-spacing: .3px;
+        cursor:pointer;
+        position: relative;
+        overflow:hidden;
+        transform: translateZ(0);
+        transition: transform .12s ease, background .18s ease, box-shadow .18s ease;
+        user-select:none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .btn:active{
+        transform: translateY(1px) scale(.99);
+        box-shadow: 0 10px 22px rgba(24, 20, 12, .16);
+      }
+      .btn:hover{ background: var(--btn-hover); }
+      .btn[disabled]{
+        cursor:not-allowed;
+        opacity:.72;
+      }
+      .btn .shine{
+        position:absolute;
+        inset:-40%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.24), transparent);
+        transform: translateX(-40%) rotate(20deg);
+        animation: shine 2.8s ease-in-out infinite;
+        pointer-events:none;
+        opacity:.8;
+      }
+      @keyframes shine{
+        0% { transform: translateX(-55%) rotate(20deg); opacity: .0; }
+        35%{ opacity: .55; }
+        70%{ transform: translateX(55%) rotate(20deg); opacity: .0; }
+        100%{ transform: translateX(55%) rotate(20deg); opacity: .0; }
+      }
+
+      /* Flying orb */
+      .orb{
+        position: fixed;
+        left: 0; top: 0;
+        z-index: 99;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.72);
+        border: 1px solid rgba(0,0,0,.07);
+        box-shadow: 0 16px 35px rgba(24, 20, 12, .14);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        font-size: 13px;
+        color: rgba(43,42,40,.80);
+        max-width: min(72vw, 360px);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transform: translate(-9999px, -9999px);
+        will-change: transform, opacity, filter;
+      }
+      .orb::before{
+        content:"";
+        position:absolute;
+        inset: -14px;
+        border-radius: inherit;
+        background: radial-gradient(closest-side, rgba(255, 154, 196, .20), transparent 65%);
+        filter: blur(10px);
+        opacity:.8;
+        pointer-events:none;
+        mix-blend-mode: multiply;
+      }
+
+      /* Modal (receipt / polaroid) */
+      .modal{
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        display:none;
+        align-items:center;
+        justify-content:center;
+        padding: calc(18px + var(--safeTop)) 18px calc(18px + var(--safeBottom));
+      }
+      .modal.show{ display:flex; }
+      .backdrop{
+        position:absolute;
+        inset: 0;
+        background: rgba(31, 30, 28, .22);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        opacity: 0;
+        animation: fadeIn .20s ease forwards;
+      }
+      @keyframes fadeIn{ to{ opacity:1; } }
+
+      .receipt{
+        position: relative;
+        width: min(420px, 92vw);
+        border-radius: 18px;
+        background: rgba(255,255,255,.86);
+        border: 1px solid rgba(0,0,0,.08);
+        box-shadow: 0 28px 80px rgba(24, 20, 12, .18);
+        transform: translateY(10px) scale(.985);
+        opacity: 0;
+        animation: pop .28s cubic-bezier(.2,.9,.2,1) forwards;
+        overflow: hidden;
+      }
+      @keyframes pop{
+        to { transform: translateY(0px) scale(1); opacity: 1; }
+      }
+
+      .tape{
+        position:absolute;
+        left: 50%;
+        top: 10px;
+        width: 120px;
+        height: 26px;
+        transform: translateX(-50%) rotate(-2deg);
+        background: rgba(255, 234, 186, .75);
+        border: 1px solid rgba(0,0,0,.06);
+        box-shadow: 0 10px 18px rgba(24,20,12,.08);
+        border-radius: 10px;
+      }
+      .tape::after{
+        content:"";
+        position:absolute;
+        inset: 0;
+        background: repeating-linear-gradient(45deg, rgba(255,255,255,.0), rgba(255,255,255,.0) 8px,
+  rgba(255,255,255,.22) 8px, rgba(255,255,255,.22) 16px);
+        border-radius: inherit;
+        opacity:.7;
+        mix-blend-mode: screen;
+      }
+
+      .receipt-inner{
+        padding: 44px 18px 16px;
+      }
+      .receipt h2{
+        margin:0 0 8px 0;
+        font-size: 14px;
+        letter-spacing: .6px;
+        color: rgba(43,42,40,.65);
+        font-weight: 780;
+        text-transform: uppercase;
+      }
+      .quote{
+        margin: 0 0 14px 0;
+        font-size: 16px;
+        line-height: 1.55;
+        font-weight: 720;
+        color: rgba(43,42,40,.92);
+      }
+      .lucky{
+        display:inline-flex;
+        align-items:center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: rgba(249,245,240,.92);
+        border: 1px solid rgba(0,0,0,.06);
+        color: rgba(43,42,40,.78);
+        box-shadow: 0 12px 28px rgba(24, 20, 12, .08);
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .lucky .badge{
+        width: 18px; height: 18px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(130,239,199,.95), rgba(255,210,224,.95));
+        box-shadow: 0 10px 18px rgba(130,239,199,.22);
+        flex: 0 0 auto;
+      }
+
+      .footer{
+        margin-top: 14px;
+        display:flex;
+        align-items:center;
+        justify-content: space-between;
+        gap: 10px;
+        padding-top: 12px;
+        border-top: 1px dashed rgba(0,0,0,.10);
+        color: rgba(43,42,40,.58);
+        font-size: 12px;
+        letter-spacing: .3px;
+      }
+      .close{
+        border: 0;
+        background: rgba(43,42,40,.06);
+        color: rgba(43,42,40,.72);
+        border: 1px solid rgba(0,0,0,.06);
+        padding: 8px 10px;
+        border-radius: 12px;
+        cursor:pointer;
+        font-weight: 760;
+        transition: transform .12s ease, background .18s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .close:active{ transform: translateY(1px); }
+      .close:hover{ background: rgba(43,42,40,.085); }
+
+      /* Small helper for SSR banner */
+      .ssr-flag{
+        display:none;
+        align-items:center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(255, 244, 206, .92);
+        border: 1px solid rgba(231, 182, 75, .35);
+        color: rgba(120, 80, 18, .86);
+        box-shadow: 0 14px 30px rgba(231, 182, 75, .18);
+        font-size: 12px;
+        font-weight: 820;
+        letter-spacing: .3px;
+        user-select:none;
+      }
+      .ssr-flag .star{
+        width: 12px; height: 12px;
+        background: conic-gradient(from 210deg, #fff3c7, #f5c75f, #fff3c7);
+        border-radius: 3px;
+        transform: rotate(18deg);
+        box-shadow: 0 0 18px rgba(231, 182, 75, .55);
+      }
+
+      /* Accessibility / reduced motion */
+      @media (prefers-reduced-motion: reduce){
+        .blob, .blob.swallowing, .btn .shine, .sparkles span{
+          animation: none !important;
+        }
+        .backdrop, .receipt{ animation: none !important; opacity: 1 !important; transform: none !important; }
+      }
+
+      /* Mobile fine-tuning */
+      @media (max-width: 480px){
+        h1{ font-size: 17px; }
+        .stage{ min-height: 330px; }
+        .btn{ min-width: 110px; }
+        .chip{ display:none; }
+        .hint{ font-size: 11px; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="bg" aria-hidden="true"></div>
+
+    <main class="wrap">
+      <header>
+        <div class="title">
+          <h1>职场坏情绪回收站 <span style="opacity:.62;font-weight:720">(Mood Recycler V3.0)</span></h1>
+          <p class="sub">把不开心丢进“软软怪”的嘴里，它会帮你消化成好运。刷出隐藏款 SSR 试试？</p>
+        </div>
+        <div class="chip" id="skinChip">盲盒皮肤：加载中…</div>
+      </header>
+
+      <section class="stage" aria-label="软软怪舞台">
+        <div class="blob-wrap">
+          <div class="sparkles" id="sparkles" aria-hidden="true"></div>
+
+          <div class="blob skin-a" id="blob" role="img" aria-label="软软怪">
+            <div class="mouth" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <div class="hint" aria-hidden="true">
+          <div>提示：<b>点按钮有震动</b>，更解压。</div>
+          <div id="ssrFlag" class="ssr-flag"><span class="star"></span>SSR 锦鲤金已出货</div>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="输入区">
+        <div class="input">
+          <span class="dot" aria-hidden="true"></span>
+          <input id="text" type="text" maxlength="60" placeholder="写下你的不开心..." aria-label="写下你的不开心" />
+        </div>
+        <button class="btn" id="btn">
+          <span class="shine" aria-hidden="true"></span>
+          粉碎烦恼
+        </button>
+      </section>
+    </main>
+
+    <!-- Flying orb -->
+    <div class="orb" id="orb" aria-hidden="true"></div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal" aria-hidden="true">
+      <div class="backdrop" id="backdrop"></div>
+      <div class="receipt" role="dialog" aria-modal="true" aria-label="回收结果小票">
+        <div class="tape" aria-hidden="true"></div>
+        <div class="receipt-inner">
+          <h2>MOOD RECEIPT</h2>
+          <p class="quote" id="quote">……</p>
+          <div class="lucky" id="lucky">
+            <span class="badge" aria-hidden="true"></span>
+            <span id="action">今日宜：……</span>
+          </div>
+          <div class="footer">
+            <div>FROM: 坏情绪粉碎办事处</div>
+            <button class="close" id="closeBtn">收好</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        const QUOTES = [
+          "烦恼被吞掉啦！去吃点甜的压压惊。",
+          "允许自己做个废物，也是一种能力。",
+          "这点破事，配不上你今天的妆容。",
+          "已将负能量转化为好运，请查收。",
+          "摸摸头，你已经做得超级棒了！",
+          "别让烂人烂事，挡住了你的光。",
+          "天塌下来有高个子顶着，你只负责快乐。",
+          "根据能量守恒，坏运气用完了，好运马上来。",
+          "深呼吸，那个讨厌鬼已经被消化了。",
+          "下班！剩下的事明天再说。"
+        ];
+
+        const LUCKY_ACTIONS = [
+          "今日宜：全糖奶茶", "今日宜：准点下班", "今日宜：摸鱼十分钟",
+          "今日宜：买张彩票", "今日宜：拒绝加班", "今日宜：睡个好觉",
+          "今日宜：吃顿火锅", "今日宜：发呆"
+        ];
+
+        const SKINS = [
+          { key: "A", name: "标准粉 · Standard", className: "skin-a", ssr: false },
+          { key: "M", name: "薄荷绿 · Mint", className: "skin-m", ssr: false },
+          { key: "E", name: "EMO灰 · Emo", className: "skin-e", ssr: false },
+          { key: "SSR", name: "锦鲤金 · SSR隐藏款", className: "skin-ssr", ssr: true }
+        ];
+
+        const blob = document.getElementById("blob");
+        const sparkles = document.getElementById("sparkles");
+        const skinChip = document.getElementById("skinChip");
+        const ssrFlag = document.getElementById("ssrFlag");
+        const input = document.getElementById("text");
+        const btn = document.getElementById("btn");
+
+        const orb = document.getElementById("orb");
+        const modal = document.getElementById("modal");
+        const backdrop = document.getElementById("backdrop");
+        const closeBtn = document.getElementById("closeBtn");
+        const quoteEl = document.getElementById("quote");
+        const actionEl = document.getElementById("action");
+
+        let isBusy = false;
+        let currentSkinKey = null;
+
+        const rand = (n) => Math.floor(Math.random() * n);
+        const pick = (arr) => arr[rand(arr.length)];
+
+        function safeVibrate(pattern) {
+          try {
+            if (navigator.vibrate) navigator.vibrate(pattern);
+          } catch (_) {}
+        }
+
+        function buildSparkles() {
+          // Create a fixed set of sparkles for SSR mode (pure CSS animation).
+          const count = 14;
+          sparkles.innerHTML = "";
+          for (let i = 0; i < count; i++) {
+            const s = document.createElement("span");
+            const angle = (i / count) * Math.PI * 2;
+            const radius = 46 + (i % 5) * 8;
+            const cx = 50 + Math.cos(angle) * radius;
+            const cy = 50 + Math.sin(angle) * (radius * 0.78);
+            s.style.left = `${cx}%`;
+            s.style.top = `${cy}%`;
+            s.style.animationDelay = `${(Math.random() * 1.6).toFixed(2)}s`;
+            s.style.animationDuration = `${(1.25 + Math.random() * 1.2).toFixed(2)}s`;
+            s.style.width = `${6 + Math.random() * 8}px`;
+            s.style.height = s.style.width;
+            sparkles.appendChild(s);
+          }
+        }
+
+        function setSkin(skin) {
+          // Remove old classes
+          for (const s of SKINS) blob.classList.remove(s.className);
+
+          blob.classList.add(skin.className);
+          currentSkinKey = skin.key;
+
+          skinChip.textContent = `盲盒皮肤：${skin.name}`;
+          ssrFlag.style.display = skin.ssr ? "inline-flex" : "none";
+          sparkles.classList.toggle("on", !!skin.ssr);
+
+          if (skin.ssr) {
+            // SSR: extra little haptic flourish
+            safeVibrate([18, 26, 18]);
+          }
+        }
+
+        function rollSkin({ avoidSame = true } = {}) {
+          let candidates = SKINS.slice();
+          if (avoidSame && currentSkinKey) candidates = candidates.filter(s => s.key !== currentSkinKey);
+          setSkin(pick(candidates));
+        }
+
+        function showReceipt() {
+          quoteEl.textContent = pick(QUOTES);
+          actionEl.textContent = pick(LUCKY_ACTIONS);
+          modal.classList.add("show");
+          modal.removeAttribute("aria-hidden");
+          // tiny haptic “print receipt”
+          safeVibrate(12);
+        }
+
+        function hideReceipt() {
+          modal.classList.remove("show");
+          modal.setAttribute("aria-hidden", "true");
+        }
+
+        function getMouthTarget() {
+          const mouth = blob.querySelector(".mouth");
+          const r = mouth.getBoundingClientRect();
+          return { x: r.left + r.width * 0.5, y: r.top + r.height * 0.52 };
+        }
+
+        function placeOrbAtInput(text) {
+          const r = input.getBoundingClientRect();
+          orb.textContent = text;
+          // Start near right side of input to feel “thrown”
+          const startX = r.left + Math.min(r.width * 0.72, r.width - 22);
+          const startY = r.top + r.height * 0.5;
+          orb.style.transform = `translate(${startX}px, ${startY}px) translate(-50%, -50%)`;
+          orb.style.opacity = "1";
+          orb.style.filter = "blur(0px)";
+          orb.setAttribute("aria-hidden", "false");
+          return { x: startX, y: startY };
+        }
+
+        async function flyIntoMouth(text) {
+          const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+          const start = placeOrbAtInput(text);
+          const target = getMouthTarget();
+
+          const dx = target.x - start.x;
+          const dy = target.y - start.y;
+
+          // Subtle curve with WAAPI keyframes
+          const midX = dx * 0.55;
+          const midY = dy * 0.35 - 40;
+
+          const duration = prefersReduced ? 260 : 780;
+
+          const anim = orb.animate([
+            { transform: `translate(${start.x}px, ${start.y}px) translate(-50%, -50%) scale(1)`, opacity: 1, filter:
+  "blur(0px)" },
+            { transform: `translate(${start.x + midX}px, ${start.y + midY}px) translate(-50%, -50%) scale(0.98)`,
+  opacity: 0.95, offset: 0.55 },
+            { transform: `translate(${target.x}px, ${target.y}px) translate(-50%, -50%) scale(0.25)`, opacity: 0.0,
+  filter: "blur(1px)" }
+          ], {
+            duration,
+            easing: "cubic-bezier(.2,.9,.2,1)",
+            fill: "forwards"
+          });
+
+          return anim.finished.catch(() => {});
+        }
+
+        async function swallowFlow() {
+          if (isBusy) return;
+
+          const raw = (input.value || "").trim();
+          if (!raw) {
+            safeVibrate(18);
+            input.focus();
+            // quick “nope” micro shake
+            input.animate(
+              [{ transform: "translateX(0px)" }, { transform: "translateX(-6px)" }, { transform: "translateX(6px)" },
+  { transform: "translateX(0px)" }],
+              { duration: 260, easing: "ease-out" }
+            );
+            return;
+          }
+
+          isBusy = true;
+          btn.disabled = true;
+          safeVibrate(26);
+
+          const text = raw;
+          input.value = "";
+          input.blur();
+
+          // start flying orb
+          const flyPromise = flyIntoMouth(text);
+
+          // gulp sync: start slightly after orb begins moving
+          setTimeout(() => blob.classList.add("swallowing"), 120);
+
+          // end gulp class
+          setTimeout(() => blob.classList.remove("swallowing"), 1080);
+
+          await flyPromise;
+
+          // cleanup orb state
+          orb.setAttribute("aria-hidden", "true");
+          orb.style.opacity = "0";
+
+          // After swallow: roll skin again (blind box)
+          rollSkin({ avoidSame: true });
+
+          // Show receipt slightly after swallow
+          setTimeout(() => {
+            showReceipt();
+            btn.disabled = false;
+            isBusy = false;
+          }, 220);
+        }
+
+        function bind() {
+          btn.addEventListener("click", swallowFlow);
+
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              swallowFlow();
+            }
+          });
+
+          closeBtn.addEventListener("click", () => {
+            safeVibrate(10);
+            hideReceipt();
+          });
+
+          backdrop.addEventListener("click", () => {
+            safeVibrate(8);
+            hideReceipt();
+          });
+
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && modal.classList.contains("show")) hideReceipt();
+          });
+
+          // Tap the blob to “pet” it: tiny haptic + subtle bounce
+          blob.addEventListener("click", () => {
+            blob.animate(
+              [
+                { transform: "translateY(0px) scale(1.00)" },
+                { transform: "translateY(-6px) scale(1.03)" },
+                { transform: "translateY(0px) scale(1.00)" }
+              ],
+              { duration: 360, easing: "cubic-bezier(.2,.9,.2,1)" }
+            );
+            safeVibrate(8);
+          }, { passive: true });
+        }
+
+        // Init
+        buildSparkles();
+        rollSkin({ avoidSame: false });
+        bind();
+
+        // Bonus: refresh-roll hint (light haptic on first focus for mobile feel)
+        let focusedOnce = false;
+        input.addEventListener("focus", () => {
+          if (focusedOnce) return;
+          focusedOnce = true;
+          safeVibrate(8);
+        }, { passive: true });
+      })();
+    </script>
+  </body>
+  </html>
