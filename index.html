@@ -3,1305 +3,815 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Mood Recycler V4.0 (赛博树洞版)</title>
+  <title>Mood Recycler V4.0 - Capybara Edition</title>
   <style>
-    :root{
-      --bg: #F9F5F0;
-      --ink: #2b2a28;
-      --muted: rgba(43,42,40,.62);
-      --radius: 18px;
-      --blob-size: min(56vw, 420px);
-      --stage-h: min(64vh, 560px);
-      --drag: cubic-bezier(.2,.9,.2,1);
-      --ssr-gold: linear-gradient(135deg,#ffd86b,#ffd045 40%,#ffef9a 70%);
+    :root {
+      --capybara: #C69C6D;
+      --capybara-rage: #FF6B6B;
+      --capybara-emo: #4A5568;
+      --yuzu: #FFA500;
+      --bg-main: #F5EBE0;
+      --text: #2D2D2D;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;font-family: system-ui,-apple-system,"PingFang SC","Microsoft YaHei";background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
 
-    .wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;padding:20px;gap:14px}
-    header{width:min(960px,100%);display:flex;justify-content:space-between;align-items:center}
-    h1{margin:0;font-size:18px;font-weight:800}
-    .desc{color:var(--muted);font-size:13px}
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: linear-gradient(135deg, #F5EBE0 0%, #DFE8E0 100%);
+      font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      overflow-x: hidden;
+    }
 
-    .stage{width:min(960px,100%);height:var(--stage-h);min-height:420px;border-radius:28px;background:rgba(255,255,255,.6);box-shadow:0 18px 45px rgba(24,20,12,.08);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .wrap {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
 
-    /* background effects for modes */
-    .rain-layer{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .45s}
-    .rain-layer.on{opacity:1}
-    .rain-layer .drop{position:absolute;width:2px;height:14px;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0));opacity:.9;border-radius:2px;transform:translateY(-120%);animation:drop 900ms linear infinite}
-    @keyframes drop{to{transform:translateY(120%);opacity:0}}
+    header {
+      text-align: center;
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: rgba(45, 45, 45, 0.6);
+      letter-spacing: 0.5px;
+    }
 
-    .blob-wrap{position:relative;width:var(--blob-size);height:var(--blob-size);display:grid;place-items:center;z-index:2}
-    .blob{width:88%;height:88%;border-radius:46% 54% 52% 48%/52% 46% 54% 48%;background:linear-gradient(135deg,#ff9ac4,#ffd3e3);box-shadow:0 24px 60px rgba(24,20,12,.12),inset 0 12px 28px rgba(255,255,255,.28);position:relative;transition:filter .22s,transform .22s,border-radius 1s;will-change:transform,filter;border:0}
-    .blob::after{content:"";position:absolute;inset:-26px;border-radius:inherit;background:radial-gradient(closest-side,rgba(255,255,255,.3),transparent 68%);filter:blur(12px);opacity:.9}
-    .mouth{position:absolute;left:50%;top:56%;width:40%;height:18%;transform:translate(-50%,-50%);border-radius:999px;background:rgba(25,20,18,.12);box-shadow:inset 0 8px 16px rgba(0,0,0,.12);}
+    /* ========== CAPYBARA (CSS ART) ========== */
+    .stage {
+      width: 100%;
+      aspect-ratio: 1;
+      max-width: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 20px 0;
+    }
 
-    /* Modes */
-    .mode-rage .blob{background:linear-gradient(135deg,#ff4d4d,#ff7676);box-shadow:0 32px 90px rgba(255,77,77,.12),inset 0 18px 36px rgba(255,255,255,.12);filter:saturate(1.1)}
-    .mode-emo{background:linear-gradient(135deg,#7FDBFF,#50BFE6);filter:brightness(.86)}
-    .mode-anx{background:linear-gradient(135deg,#FFDC00,#FFD13A);}
+    .capybara-container {
+      position: relative;
+      width: 280px;
+      height: 240px;
+    }
 
-    /* shake and breathe */
-    .blob{animation:breath 3.8s ease-in-out infinite}
-    .mode-rage .blob{animation:breath 1.6s linear infinite}
-    .mode-anx .blob{animation:breath 0.9s linear infinite}
-    @keyframes breath{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+    /* Yuzu (橘子) */
+    .yuzu {
+      position: absolute;
+      top: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 50px;
+      background: var(--yuzu);
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(255, 165, 0, 0.3), inset -8px -8px 16px rgba(0, 0, 0, 0.15), inset 4px 4px 12px rgba(255, 255, 255, 0.4);
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 10;
+    }
+    .capybara-container.rage .yuzu {
+      top: 60px;
+      transform: translateX(-50%) rotateZ(360deg) scale(0.8);
+      opacity: 0.7;
+    }
 
-    /* flames/spikes for rage */
-    .spikes{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .18s}
-    .spikes.on{opacity:1}
-    .spike{position:absolute;width:8px;height:32px;background:linear-gradient(180deg,#ff9a9a,#ff4d4d);border-radius:4px;transform-origin:center bottom;animation:spk 900ms linear infinite}
-    @keyframes spk{0%{transform:scaleY(.2);opacity:.6}50%{transform:scaleY(1);opacity:1}100%{transform:scaleY(.2);opacity:.6}}
+    /* Capybara Body */
+    .body {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 140px;
+      background: var(--capybara);
+      border-radius: 60% 60% 45% 45%;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), inset 0 -12px 24px rgba(0, 0, 0, 0.08);
+      transition: background 0.45s, filter 0.45s, transform 0.1s;
+      cursor: pointer;
+      user-select: none;
+    }
 
-    /* SSR sparkles */
-    .ssr{position:absolute;inset:-28px;pointer-events:none;opacity:0;transition:opacity .28s}
-    .ssr.on{opacity:1}
-    .ssr .star{position:absolute;width:10px;height:10px;border-radius:2px;background:radial-gradient(circle,#fff,#ffd86b);box-shadow:0 0 18px rgba(255,216,107,.9);transform:rotate(10deg);filter:blur(.4px);animation:tw 1.6s ease-in-out infinite}
-    @keyframes tw{0%{opacity:.15;transform:scale(.8) rotate(0)}50%{opacity:1;transform:scale(1.25) rotate(18deg)}100%{opacity:.15;transform:scale(.9) rotate(-6deg)}}
+    .capybara-container.rage .body {
+      background: var(--capybara-rage);
+      filter: brightness(1.1);
+    }
+    .capybara-container.emo .body {
+      background: var(--capybara-emo);
+    }
+    .capybara-container.shake .body {
+      animation: shakeX 100ms linear infinite;
+    }
+    @keyframes shakeX {
+      0%, 100% { transform: translateX(-50%) translateX(0px); }
+      50% { transform: translateX(-50%) translateX(6px); }
+    }
 
-    /* UI */
-    .controls{width:min(960px,100%);display:flex;gap:12px;align-items:center;justify-content:space-between}
-    .input{flex:1;display:flex;align-items:center;background:rgba(255,255,255,.78);border-radius:14px;padding:10px 12px;box-shadow:0 10px 28px rgba(24,20,12,.06);border:1px solid rgba(0,0,0,.05)}
-    input[type=text]{width:100%;border:0;background:transparent;outline:0;font-size:14px}
-    .btn{background:var(--ink);color:#fff;padding:10px 14px;border-radius:12px;border:0;cursor:pointer;font-weight:700}
-    .tog{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.9);border:1px solid rgba(0,0,0,.06);cursor:pointer}
+    /* Eyes */
+    .eyes {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 5;
+    }
 
-    /* modal receipt */
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;z-index:60}
-    .modal.show{display:flex}
-    .backdrop{position:absolute;inset:0;background:rgba(18,18,18,.28);backdrop-filter:blur(6px)}
-    .receipt{position:relative;width:min(520px,92vw);background:rgba(255,255,255,.96);border-radius:12px;padding:22px;box-shadow:0 28px 80px rgba(24,20,12,.12);transform:translateY(8px);}
-    .receipt .title{font-weight:800;margin:0 0 8px}
-    .receipt .quote{font-size:16px;margin:0 0 12px}
-    .receipt .lucky{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(249,245,240,.9);}
+    .eye-line {
+      width: 14px;
+      height: 3px;
+      background: #2D2D2D;
+      border-radius: 2px;
+      transition: all 0.45s;
+    }
+    .capybara-container.rage .eye-line {
+      width: 18px;
+      height: 20px;
+      background: transparent;
+      border: 2px solid #2D2D2D;
+      border-radius: 50%;
+    }
 
-    /* small mobile tweaks */
-    @media(max-width:480px){.stage{min-height:360px}.blob-wrap{width:78vw;height:78vw}}
+    /* 眼睛中间的分隔 */
+    .eyes::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 2px;
+      background: #2D2D2D;
+      z-index: -1;
+    }
+
+    /* Nose */
+    .nose {
+      position: absolute;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 8px solid #2D2D2D;
+      transition: all 0.45s;
+      z-index: 5;
+    }
+    .capybara-container.rage .nose {
+      border-top-color: #FF4444;
+    }
+
+    /* Mouth (peaceful smile) */
+    .mouth {
+      position: absolute;
+      top: 85px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 8px;
+      border-bottom: 2px solid #2D2D2D;
+      border-radius: 0 0 20px 20px;
+      transition: all 0.45s;
+      z-index: 5;
+    }
+    .capybara-container.rage .mouth {
+      width: 28px;
+      height: 12px;
+      border-bottom-color: #FF4444;
+    }
+
+    /* Rain cloud (EMO mode) */
+    .rain-cloud {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.45s;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .capybara-container.emo .rain-cloud {
+      opacity: 1;
+    }
+
+    .cloud {
+      position: absolute;
+      width: 80px;
+      height: 40px;
+      background: rgba(100, 130, 160, 0.8);
+      border-radius: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      top: -20px;
+    }
+
+    .raindrops {
+      position: absolute;
+      width: 100%;
+      height: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 20px;
+    }
+
+    .drop {
+      position: absolute;
+      width: 2px;
+      height: 10px;
+      background: rgba(100, 150, 200, 0.7);
+      border-radius: 1px;
+      animation: fall 800ms linear infinite;
+    }
+
+    @keyframes fall {
+      to { transform: translateY(100px); opacity: 0; }
+    }
+
+    /* Fire particles (RAGE mode) */
+    .fire-particles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.45s;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .capybara-container.rage .fire-particles {
+      opacity: 1;
+    }
+
+    .flame {
+      position: absolute;
+      width: 12px;
+      height: 16px;
+      background: linear-gradient(180deg, #FFD700, #FF6B6B);
+      border-radius: 50% 50% 50% 0;
+      animation: flare 600ms ease-in-out infinite;
+      opacity: 0.8;
+    }
+
+    @keyframes flare {
+      0% { transform: translateY(0px) scaleY(0.8); opacity: 0.6; }
+      50% { transform: translateY(-20px) scaleY(1.2); opacity: 1; }
+      100% { transform: translateY(0px) scaleY(0.8); opacity: 0.6; }
+    }
+
+    /* ========== CONTROLS ========== */
+    .controls {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .input-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 12px;
+      padding: 10px 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    input[type="text"] {
+      flex: 1;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      font-size: 14px;
+      letter-spacing: 0.3px;
+    }
+    input::placeholder { color: rgba(45, 45, 45, 0.4); }
+
+    .btn {
+      background: var(--text);
+      color: white;
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn:hover { background: #1a1a1a; }
+
+    .audio-toggle {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      transition: all 0.2s;
+    }
+    .audio-toggle:active { transform: scale(0.92); }
+
+    /* ========== MODAL ========== */
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal.show { display: flex; }
+
+    .modal-content {
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      position: relative;
+      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.85) translateY(20px); opacity: 0; }
+      to { transform: scale(1) translateY(0px); opacity: 1; }
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin: 0 0 12px 0;
+    }
+
+    .modal-quote {
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 0 0 16px 0;
+      font-weight: 600;
+    }
+
+    .modal-action {
+      display: inline-block;
+      padding: 10px 16px;
+      background: rgba(245, 235, 224, 0.9);
+      border-radius: 8px;
+      margin: 12px 0;
+      font-size: 14px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .ssr-effect {
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .ssr-effect.on {
+      opacity: 1;
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.3), transparent 70%);
+      box-shadow: inset 0 0 40px rgba(255, 215, 0, 0.4);
+    }
+
+    .ssr-stars {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .star {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: #FFD700;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #FFD700;
+      animation: twinkle 1.2s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+
+    .modal-close {
+      background: var(--text);
+      color: white;
+      border: 0;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      margin-top: 16px;
+    }
+    .modal-close:active { transform: scale(0.96); }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 18px; }
+      .capybara-container { width: 200px; height: 170px; }
+      .body { width: 150px; height: 110px; }
+      .yuzu { width: 40px; height: 40px; }
+    }
   </style>
 </head>
 <body>
-  <main class="wrap">
+  <div class="wrap">
     <header>
-      <div>
-        <h1>MOOD RECYCLER V4.0 <span style="font-weight:600;font-size:12px;opacity:.66">赛博树洞版</span></h1>
-        <div class="desc">五感反馈：视觉 · 触觉 · 听觉 · 情绪识别 · 连击宣泄</div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <div id="audioToggle" class="tog" title="声音已关闭">🔇 声音</div>
-        <div style="font-size:12px;color:var(--muted)">点击怪兽可连击发泄</div>
-      </div>
+      <h1>🌊 MOOD RECYCLER 🌊</h1>
+      <div class="subtitle">Capybara Edition - 放松，卡皮巴拉帮你消化烦恼</div>
     </header>
 
-    <section class="stage" aria-label="舞台">
-      <div class="rain-layer" id="rain"></div>
+    <section class="stage">
+      <div class="capybara-container" id="capybara">
+        <!-- Yuzu (橘子) -->
+        <div class="yuzu" id="yuzu"></div>
 
-      <div class="blob-wrap" id="blobWrap">
-        <div class="ssr" id="ssrLayer" aria-hidden="true"></div>
-        <div class="spikes" id="spikes"></div>
-        <div class="blob" id="blob" role="img" aria-label="软软怪" tabindex="0">
-          <div class="mouth" aria-hidden="true"></div>
+        <!-- Rain cloud (EMO mode) -->
+        <div class="rain-cloud">
+          <div class="cloud"></div>
+          <div class="raindrops" id="raindrops"></div>
+        </div>
+
+        <!-- Fire particles (RAGE mode) -->
+        <div class="fire-particles" id="fireParticles"></div>
+
+        <!-- Body -->
+        <div class="body" id="capyBody">
+          <!-- Eyes -->
+          <div class="eyes" id="eyes">
+            <div class="eye-line"></div>
+            <div class="eye-line"></div>
+          </div>
+
+          <!-- Nose -->
+          <div class="nose"></div>
+
+          <!-- Mouth -->
+          <div class="mouth"></div>
         </div>
       </div>
     </section>
 
     <section class="controls">
-      <div class="input">
-        <input id="text" type="text" maxlength="120" placeholder="输入烦恼，或直接点击怪兽揍它..." aria-label="输入烦恼" />
+      <div class="input-box">
+        <input id="text" type="text" maxlength="100" placeholder="输入烦恼，或敲它积功德..." />
       </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn" id="smash">粉碎烦恼</button>
-      </div>
+      <button class="btn" id="submitBtn">粉碎</button>
+      <button class="audio-toggle" id="audioToggle">🔇</button>
     </section>
-  </main>
+  </div>
 
-  <div class="modal" id="modal" aria-hidden="true">
-    <div class="backdrop" id="backdrop"></div>
-    <div class="receipt" role="dialog" aria-modal="true">
-      <div class="receipt-title">✨ DAILY ORACLE ✨</div>
-      <p class="quote" id="quote">...</p>
-      <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
-        <div class="lucky"><span id="badge" style="width:18px;height:18px;border-radius:6px;background:linear-gradient(135deg,#ff9ac4,#82efc7);box-shadow:0 10px 18px rgba(0,0,0,.06)"></span><span id="action">今日宜：摸鱼</span></div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn" id="closeBtn">收好</button>
-        </div>
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div class="ssr-effect" id="ssrEffect">
+        <div class="ssr-stars" id="ssrStars"></div>
       </div>
+      <h2 class="modal-title">✨ MOOD ORACLE ✨</h2>
+      <p class="modal-quote" id="modalQuote">...</p>
+      <div class="modal-action" id="modalAction">今日宜：摸鱼</div>
+      <button class="modal-close" id="modalClose">收好</button>
     </div>
   </div>
 
   <script>
-  (function(){
-    // --- DOM ---
-    const blob = document.getElementById('blob');
-    const blobWrap = document.getElementById('blobWrap');
+  (function() {
+    // ========== DOM REFS ==========
+    const capybara = document.getElementById('capybara');
     const text = document.getElementById('text');
-    const smashBtn = document.getElementById('smash');
-    const rain = document.getElementById('rain');
-    const spikes = document.getElementById('spikes');
-    const ssrLayer = document.getElementById('ssrLayer');
+    const submitBtn = document.getElementById('submitBtn');
     const audioToggle = document.getElementById('audioToggle');
     const modal = document.getElementById('modal');
-    const backdrop = document.getElementById('backdrop');
-    const closeBtn = document.getElementById('closeBtn');
-    const quoteEl = document.getElementById('quote');
-    const badge = document.getElementById('badge');
-    const actionEl = document.getElementById('action');
+    const modalQuote = document.getElementById('modalQuote');
+    const modalAction = document.getElementById('modalAction');
+    const modalClose = document.getElementById('modalClose');
+    const ssrEffect = document.getElementById('ssrEffect');
+    const ssrStars = document.getElementById('ssrStars');
+    const raindrops = document.getElementById('raindrops');
+    const fireParticles = document.getElementById('fireParticles');
 
-    // --- state ---
+    // ========== STATE ==========
     let audioEnabled = false;
-    let ctx = null;
+    let audioCtx = null;
     let isBusy = false;
 
-    // combo system
-    let combo = 0;
-    let comboTimer = null;
+    const QUOTES = [
+      '根据能量守恒法则，你的烦恼已转化为好运。',
+      '卡皮巴拉正在消化你的坏心情，请耐心等待。',
+      '别跟自己过不去，你已经够棒了。',
+      '淡定如卡皮巴拉，一切都会好的。',
+      '烦恼被吞了，好运马上来。'
+    ];
 
-    // SSR chance
+    const ACTIONS = [
+      '今日宜：喝奶茶',
+      '今日宜：摸鱼',
+      '今日宜：早点下班',
+      '今日宜：睡个好觉',
+      '今日宜：买张彩票'
+    ];
+
+    const RAGE_WORDS = ['死', '滚', '傻逼', '烦', '老板', '加班', '气死', '讨厌'];
+    const EMO_WORDS = ['累', '难过', '哭', '分手', '孤独', '抑郁', '没钱', '好难'];
+    const ANX_WORDS = ['钱', '穷', '房租', '还', '急'];
+
     const SSR_CHANCE = 0.05;
 
-    // quotes and actions
-    const QUOTES = [
-      '烦恼已粉碎，留好心情给自己。',
-      '深呼吸，光会回来的。',
-      '别跟自己的好情绪过不去。',
-      '已将负能量转化为开小差资格。',
-      '你值得被温柔以待。'
-    ];
-    const ACTIONS = ['全糖奶茶','准时下班','摸鱼十分钟','买张彩票','睡个好觉','吃顿火锅','放空十分钟'];
-
-    // word lists
-    const RAGE = ['死','滚','傻逼','烦','老板','加班','去他妈','去TM','气死'];
-    const EMO = ['累','难过','哭','分手','孤独','没钱','好难','抑郁','委屈'];
-    const ANX = ['钱','穷','房租','买','还钱','还不起','欠'];
-
-    function safeVibrate(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
-
-    // --- Audio helpers ---
-    function ensureAudio(){
-      if(ctx) return; ctx = new (window.AudioContext||window.webkitAudioContext)();
+    // ========== UTILITIES ==========
+    function vibrate(pattern) {
+      try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
     }
 
-    function playPop(){ if(!audioEnabled) return; ensureAudio();
-      const o = ctx.createOscillator(); const g = ctx.createGain();
-      o.type='sine'; o.frequency.setValueAtTime(800,ctx.currentTime);
-      g.gain.setValueAtTime(0.0001,ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime+0.005);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.16);
-      o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.18);
+    function rand(n) { return Math.floor(Math.random() * n); }
+    function pick(arr) { return arr[rand(arr.length)]; }
+
+    // ========== AUDIO CONTEXT ==========
+    function ensureAudio() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
 
-    // white noise generator for shred
-    function whiteNoise(duration=1.0){
-      if(!audioEnabled) return; ensureAudio();
-      const sampleRate = ctx.sampleRate; const len = Math.floor(duration*sampleRate);
-      const buffer = ctx.createBuffer(1,len,sampleRate); const data = buffer.getChannelData(0);
-      for(let i=0;i<len;i++) data[i]=(Math.random()*2-1)*0.5;
-      const src = ctx.createBufferSource(); src.buffer = buffer;
-      const bf = ctx.createBiquadFilter(); bf.type='lowpass'; bf.frequency.setValueAtTime(1000,ctx.currentTime);
-      src.connect(bf); bf.connect(ctx.destination); src.start();
-      // fade out
-      const gain = ctx.createGain(); bf.disconnect(); bf.connect(gain); gain.connect(ctx.destination);
-      gain.gain.setValueAtTime(1,ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-      src.stop(ctx.currentTime + duration + 0.02);
+    // 木鱼声 (Wooden Fish)
+    function playWoodenFish() {
+      if (!audioEnabled) return;
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      
+      // Main tone: bright, short
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.exponentialRampToValueAtTime(400, now + 0.08);
+      
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.25, now + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.12);
+
+      // High freq overtone (空灵感)
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(2400, now);
+      osc2.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
+      
+      gain2.gain.setValueAtTime(0, now);
+      gain2.gain.linearRampToValueAtTime(0.12, now + 0.005);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.start(now);
+      osc2.stop(now + 0.1);
     }
 
-    function playRageHit(){ if(!audioEnabled) return; ensureAudio();
-      const o = ctx.createOscillator(); const g = ctx.createGain();
-      o.type='sawtooth'; o.frequency.setValueAtTime(80, ctx.currentTime);
-      o.connect(g); g.connect(ctx.destination);
-      g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.linearRampToValueAtTime(0.6, ctx.currentTime+0.04);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.9);
-      o.start(); o.stop(ctx.currentTime+0.95);
+    // 碎纸声
+    function playShredSound() {
+      if (!audioEnabled) return;
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      
+      const bufferSize = audioCtx.sampleRate * 0.8;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.4;
+      }
+      
+      const src = audioCtx.createBufferSource();
+      src.buffer = buffer;
+      
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(2000, now);
+      
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.4, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+      
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      src.start(now);
+      src.stop(now + 0.85);
     }
 
-    function playEmoDrop(){ if(!audioEnabled) return; ensureAudio();
-      const o = ctx.createOscillator(); const g = ctx.createGain(); o.type='sine';
-      const now = ctx.currentTime; o.frequency.setValueAtTime(300, now); o.frequency.exponentialRampToValueAtTime(120, now+0.8);
-      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.45, now+0.06); g.gain.exponentialRampToValueAtTime(0.001, now+1.2);
-      o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now+1.3);
-    }
-
-    // --- visual helpers ---
-    function setMode(mode){
-      blobWrap.parentElement.classList.remove('mode-rage','mode-emo','mode-anx');
-      blobWrap.parentElement.classList.add(mode);
-      // rain
-      if(mode==='mode-emo') rain.classList.add('on'); else rain.classList.remove('on');
-      // spikes
-      if(mode==='mode-rage') spikes.classList.add('on'); else spikes.classList.remove('on');
-    }
-
-    // create rain drops and spikes
-    function buildEffects(){
-      // rain
-      rain.innerHTML=''; for(let i=0;i<40;i++){const d=document.createElement('div');d.className='drop';d.style.left=Math.random()*100+'%';d.style.animationDelay=(Math.random()*900)+'ms';d.style.height=(8+Math.random()*18)+'px';rain.appendChild(d)}
-      // spikes
-      spikes.innerHTML=''; for(let i=0;i<28;i++){const s=document.createElement('div');s.className='spike';s.style.left=(15+Math.random()*70)+'%';s.style.bottom=(4+Math.random()*30)+'%';s.style.height=(18+Math.random()*56)+'px';s.style.transform='scaleY('+ (0.5+Math.random()*1.6)+')';s.style.animationDelay=(Math.random()*800)+'ms';spikes.appendChild(s)}
-      // ssr stars
-      ssrLayer.innerHTML=''; for(let i=0;i<12;i++){const s=document.createElement('div');s.className='star';s.style.left=(10+Math.random()*80)+'%';s.style.top=(10+Math.random()*80)+'%';s.style.animationDelay=(Math.random()*1.6)+'s';ssrLayer.appendChild(s)}
-    }
-
-    buildEffects();
-
-    // --- emotion detection ---
-    function detectEmotion(input){
-      const str = (input||'').toLowerCase();
-      for(const w of RAGE) if(str.indexOf(w)!==-1) return 'mode-rage';
-      for(const w of EMO) if(str.indexOf(w)!==-1) return 'mode-emo';
-      for(const w of ANX) if(str.indexOf(w)!==-1) return 'mode-anx';
+    // ========== EMOTION DETECTION ==========
+    function detectEmotion(str) {
+      str = (str || '').toLowerCase();
+      for (const w of RAGE_WORDS) if (str.includes(w)) return 'rage';
+      for (const w of EMO_WORDS) if (str.includes(w)) return 'emo';
+      for (const w of ANX_WORDS) if (str.includes(w)) return 'anx';
       return '';
     }
 
-    // live detect
-    text.addEventListener('input', ()=>{
-      const val = text.value || '';
-      const mode = detectEmotion(val);
-      if(mode) setMode(mode); else setMode('');
-      // gentle pop while typing
-      playPop(); safeVibrate(6);
-    });
-
-    // --- smash / swallow flow ---
-    function showReceipt(ssr=false){
-      quoteEl.textContent = QUOTES[Math.floor(Math.random()*QUOTES.length)];
-      actionEl.textContent = '今日宜：' + ACTIONS[Math.floor(Math.random()*ACTIONS.length)];
-      if(ssr){ ssrLayer.classList.add('on'); badge.style.background = 'var(--ssr-gold)'; }
-      else { ssrLayer.classList.remove('on'); badge.style.background = 'linear-gradient(135deg,#ff9ac4,#82efc7)'; }
-      modal.classList.add('show'); modal.removeAttribute('aria-hidden');
-      safeVibrate([12,8,12]);
+    function setMode(mode) {
+      capybara.classList.remove('rage', 'emo', 'shake');
+      if (mode === 'rage') capybara.classList.add('rage');
+      else if (mode === 'emo') capybara.classList.add('emo');
+      else if (mode === 'anx') capybara.classList.add('shake');
     }
 
-    function hideReceipt(){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); }
-
-    async function smashProcess(mode){
-      if(isBusy) return; isBusy=true;
-      // visual gulp
-      blob.animate([{transform:'scale(1)'},{transform:'scale(.86)'},{transform:'scale(1)'}],{duration:900,easing: 'ease-out'});
-      safeVibrate([20,30,40]);
-      // audio based on mode
-      if(mode==='mode-rage'){ playRageHit(); whiteNoise(0.9); }
-      else if(mode==='mode-emo'){ playEmoDrop(); }
-      else if(mode==='mode-anx'){ whiteNoise(0.7); }
-      else { whiteNoise(0.5); }
-
-      // small delay to feel the effect
-      await new Promise(r=>setTimeout(r,850));
-
-      const ssr = Math.random() < SSR_CHANCE;
-      // screen shake
-      const root = document.documentElement;
-      const shake = root.animate([{transform:'translateY(0px)'},{transform:'translateY(-8px)'},{transform:'translateY(6px)'},{transform:'translateY(0px)'}],{duration:600,iterations:1});
-      shake.onfinish = ()=>{};
-
-      showReceipt(ssr);
-      isBusy=false;
+    // ========== EFFECTS ==========
+    function buildRaindrops() {
+      raindrops.innerHTML = '';
+      for (let i = 0; i < 12; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'drop';
+        drop.style.left = (30 + Math.random() * 40) + '%';
+        drop.style.top = Math.random() * 20 + 'px';
+        drop.style.animationDelay = (Math.random() * 800) + 'ms';
+        raindrops.appendChild(drop);
+      }
     }
 
-    // button click
-    smashBtn.addEventListener('click', ()=>{
-      safeVibrate(18);
-      const mode = detectEmotion(text.value||'');
-      smashProcess(mode);
+    function buildFireParticles() {
+      fireParticles.innerHTML = '';
+      for (let i = 0; i < 8; i++) {
+        const flame = document.createElement('div');
+        flame.className = 'flame';
+        flame.style.left = (20 + Math.random() * 60) + '%';
+        flame.style.top = (60 + Math.random() * 60) + '%';
+        flame.style.animationDelay = (Math.random() * 600) + 'ms';
+        fireParticles.appendChild(flame);
+      }
+    }
+
+    function buildSSRStars() {
+      ssrStars.innerHTML = '';
+      for (let i = 0; i < 18; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.animationDelay = (Math.random() * 1.2) + 's';
+        ssrStars.appendChild(star);
+      }
+    }
+
+    buildRaindrops();
+    buildFireParticles();
+    buildSSRStars();
+
+    // ========== INTERACTIONS ==========
+    text.addEventListener('input', () => {
+      const emotion = detectEmotion(text.value);
+      setMode(emotion);
+      playWoodenFish();
+      vibrate(8);
     });
 
-    // modal handlers
-    closeBtn.addEventListener('click', ()=>{ safeVibrate(8); hideReceipt(); });
-    backdrop.addEventListener('click', ()=>{ safeVibrate(8); hideReceipt(); });
+    // Capybara tap (连击/积功德)
+    let tapCombo = 0;
+    let tapTimeout = null;
 
-    // --- combo click system ---
-    blob.addEventListener('click', (e)=>{
-      // enable audio on first user gesture
-      if(!audioEnabled){ /* keep audio disabled until explicitly toggled */ }
-      safeVibrate(6);
-      combo++;
-      // visual feedback
-      if(combo<6){ blob.animate([{transform:'scale(1)'},{transform:'scale(.92)'},{transform:'scale(1)'}],{duration:160}); playPop(); }
-      else if(combo<21){ blob.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:220}); playRageHit(); }
-      else { // explosion
-        const mode = detectEmotion(text.value||'') || 'mode-rage';
-        smashProcess(mode);
-        combo = 0;
+    capybara.addEventListener('click', () => {
+      if (audioEnabled) playWoodenFish();
+      vibrate(12);
+      
+      tapCombo++;
+      const scale = Math.min(1 + (tapCombo * 0.02), 1.15);
+      capybara.style.animation = `none`;
+      setTimeout(() => {
+        capybara.animate([
+          { transform: `scale(${scale})` },
+          { transform: 'scale(0.95)' },
+          { transform: 'scale(1)' }
+        ], { duration: 200 });
+      }, 10);
+
+      if (tapTimeout) clearTimeout(tapTimeout);
+      tapTimeout = setTimeout(() => { tapCombo = 0; }, 1200);
+
+      // Auto trigger at 20+ taps
+      if (tapCombo >= 20) {
+        tapCombo = 0;
+        submitFlow();
+      }
+    });
+
+    async function submitFlow() {
+      if (isBusy) return;
+      isBusy = true;
+
+      const emotion = detectEmotion(text.value);
+      
+      // Animation + sound
+      capybara.animate([
+        { transform: 'scale(1)', filter: 'brightness(1)' },
+        { transform: 'scale(0.9)', filter: 'brightness(1.2)' }
+      ], { duration: 600 });
+
+      if (emotion === 'rage') playShredSound();
+      else playShredSound();
+
+      vibrate([30, 50, 30, 50, 30]);
+
+      await new Promise(r => setTimeout(r, 700));
+
+      const isSSR = Math.random() < SSR_CHANCE;
+      showResult(isSSR);
+
+      text.value = '';
+      setMode('');
+      tapCombo = 0;
+      isBusy = false;
+    }
+
+    submitBtn.addEventListener('click', submitFlow);
+    text.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitFlow();
+      }
+    });
+
+    // ========== MODAL ==========
+    function showResult(isSSR) {
+      modalQuote.textContent = pick(QUOTES);
+      modalAction.textContent = pick(ACTIONS);
+
+      if (isSSR) {
+        ssrEffect.classList.add('on');
+        modalQuote.textContent = '🎉 恭喜！刷出了隐藏款"金身卡皮巴拉"，下周好运爆棚！🎉';
+        vibrate([50, 100, 50, 100, 50, 100]);
+      } else {
+        ssrEffect.classList.remove('on');
+        vibrate([20, 30, 20]);
       }
 
-      if(comboTimer) clearTimeout(comboTimer);
-      comboTimer = setTimeout(()=>{ combo = 0; }, 1600);
+      modal.classList.add('show');
+    }
+
+    modalClose.addEventListener('click', () => {
+      modal.classList.remove('show');
+      vibrate(10);
     });
 
-    // audio toggle
-    audioToggle.addEventListener('click', async ()=>{
-      // on first enabling, create/resume AudioContext
-      if(!audioEnabled){
-        try{ ensureAudio(); await ctx.resume(); audioEnabled=true; audioToggle.textContent='🔊 声音'; audioToggle.title='声音已开启'; }
-        catch(e){ console.warn('audio err',e); }
-      } else { audioEnabled=false; audioToggle.textContent='🔇 声音'; audioToggle.title='声音已关闭'; }
-      safeVibrate(10);
+    // ========== AUDIO TOGGLE ==========
+    audioToggle.addEventListener('click', async () => {
+      if (!audioEnabled) {
+        try {
+          ensureAudio();
+          if (audioCtx.state === 'suspended') await audioCtx.resume();
+          audioEnabled = true;
+          audioToggle.textContent = '🔊';
+        } catch (e) { console.error('Audio error:', e); }
+      } else {
+        audioEnabled = false;
+        audioToggle.textContent = '🔇';
+      }
+      vibrate(12);
     });
 
-    // keyboard: Enter to smash
-    text.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); smashBtn.click(); } });
-
-    // accessibility: focus on blob activates small nudge
-    blob.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); blob.click(); } });
-
-    // init: gentle greeting
-    text.placeholder = '输入烦恼，或直接点击怪兽揍它...';
-    setTimeout(()=>{ blob.animate([{transform:'scale(.98)'},{transform:'scale(1)'},{transform:'scale(.99)'}],{duration:1200,iterations:2}); },400);
+    // Init greeting
+    setTimeout(() => {
+      capybara.animate([
+        { transform: 'scale(0.98)' },
+        { transform: 'scale(1.02)' },
+        { transform: 'scale(1)' }
+      ], { duration: 800 });
+    }, 200);
   })();
   </script>
 </body>
 </html>
-
-• <!doctype html>
-  <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <meta name="theme-color" content="#F9F5F0" />
-    <title>职场坏情绪回收站 (Mood Recycler V3.0)</title>
-    <style>
-      :root{
-        --bg: #F9F5F0;
-        --ink: #2b2a28;
-        --muted: rgba(43,42,40,.62);
-        --card: rgba(255,255,255,.74);
-        --card-solid: #ffffff;
-        --line: rgba(43,42,40,.10);
-        --shadow: 0 18px 45px rgba(24, 20, 12, .10);
-        --shadow-soft: 0 10px 28px rgba(24, 20, 12, .08);
-        --radius: 22px;
-
-        --blob-size: min(52vw, 320px);
-        --stage-h: min(58vh, 520px);
-
-        --focus: rgba(255, 146, 186, .35);
-        --btn: #2b2a28;
-        --btn-ink: #fff;
-        --btn-hover: #1f1e1c;
-
-        --a1: #ff9ac4;
-        --a2: #ffd3e3;
-
-        --m1: #82efc7;
-        --m2: #d1fff0;
-
-        --e1: #7b8796;
-        --e2: #b9c3cf;
-
-        --g1: #f6d277;
-        --g2: #fff0b8;
-        --g3: #e7b64b;
-
-        --safeTop: env(safe-area-inset-top, 0px);
-        --safeBottom: env(safe-area-inset-bottom, 0px);
-      }
-
-      *{ box-sizing: border-box; }
-      html,body{ height:100%; }
-      body{
-        margin:0;
-        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC","Hiragino Sans GB","Microsoft
-  YaHei", "Noto Sans CJK SC", Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-        color: var(--ink);
-        background: var(--bg);
-        overflow-x:hidden;
-      }
-
-      /* Warm oatmeal + soft light spots */
-      .bg{
-        position: fixed;
-        inset: 0;
-        pointer-events:none;
-        z-index:0;
-        background:
-          radial-gradient(65vmin 45vmin at 18% 18%, rgba(255, 214, 191,.65), transparent 60%),
-          radial-gradient(60vmin 45vmin at 78% 26%, rgba(255, 181, 214,.40), transparent 62%),
-          radial-gradient(55vmin 45vmin at 65% 78%, rgba(185, 255, 232,.36), transparent 65%),
-          radial-gradient(60vmin 50vmin at 28% 82%, rgba(205, 216, 255,.26), transparent 62%),
-          linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,0));
-        filter: blur(0px);
-      }
-
-      .wrap{
-        position: relative;
-        z-index:1;
-        min-height: 100%;
-        display:flex;
-        flex-direction: column;
-        align-items:center;
-        padding: calc(18px + var(--safeTop)) 18px calc(22px + var(--safeBottom));
-        gap: 14px;
-      }
-
-      header{
-        width: min(880px, 100%);
-        display:flex;
-        align-items:flex-start;
-        justify-content: space-between;
-        gap: 10px;
-      }
-      .title{
-        display:flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      h1{
-        margin:0;
-        font-size: 18px;
-        font-weight: 760;
-        letter-spacing: .4px;
-      }
-      .sub{
-        margin:0;
-        font-size: 13px;
-        color: var(--muted);
-        line-height: 1.45;
-      }
-      .chip{
-        flex: 0 0 auto;
-        align-self: flex-start;
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: rgba(255,255,255,.55);
-        border: 1px solid rgba(0,0,0,.06);
-        box-shadow: 0 10px 24px rgba(24, 20, 12, .06);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        font-size: 12px;
-        color: rgba(43,42,40,.72);
-        user-select:none;
-        white-space: nowrap;
-      }
-
-      .stage{
-        width: min(880px, 100%);
-        height: var(--stage-h);
-        min-height: 360px;
-        border-radius: calc(var(--radius) + 10px);
-        background: rgba(255,255,255,.50);
-        border: 1px solid rgba(0,0,0,.06);
-        box-shadow: var(--shadow);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        position: relative;
-        overflow: hidden;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-      }
-
-      .stage::before{
-        content:"";
-        position:absolute;
-        inset: -40%;
-        background:
-          radial-gradient(closest-side at 25% 25%, rgba(255,255,255,.75), transparent 68%),
-          radial-gradient(closest-side at 75% 40%, rgba(255,255,255,.55), transparent 70%),
-          radial-gradient(closest-side at 45% 80%, rgba(255,255,255,.45), transparent 72%);
-        transform: rotate(8deg);
-        opacity: .85;
-      }
-
-      .hint{
-        position:absolute;
-        left: 16px;
-        right: 16px;
-        bottom: 14px;
-        display:flex;
-        justify-content: space-between;
-        align-items:center;
-        gap: 10px;
-        pointer-events:none;
-        color: rgba(43,42,40,.55);
-        font-size: 12px;
-      }
-      .hint b{
-        color: rgba(43,42,40,.72);
-        font-weight: 700;
-      }
-
-      /* Mood Blob */
-      .blob-wrap{
-        position: relative;
-        width: var(--blob-size);
-        height: var(--blob-size);
-        display:grid;
-        place-items:center;
-        transform: translateZ(0);
-        z-index:2;
-      }
-
-      .blob{
-        width: 100%;
-        height: 100%;
-        border-radius: 42% 58% 55% 45% / 55% 42% 58% 45%;
-        box-shadow:
-          0 24px 60px rgba(24, 20, 12, .16),
-          inset 0 18px 38px rgba(255,255,255,.26);
-        position: relative;
-        overflow: visible;
-        transform-origin: 50% 60%;
-        filter: saturate(1.02);
-        animation:
-          blobMorph 7.2s ease-in-out infinite,
-          blobFloat 6.5s ease-in-out infinite;
-        will-change: transform, border-radius, filter;
-      }
-
-      .blob::after{
-        /* soft outer glow ring */
-        content:"";
-        position:absolute;
-        inset: -26px;
-        border-radius: inherit;
-        background: radial-gradient(closest-side, rgba(255,255,255,.30), transparent 70%);
-        filter: blur(12px);
-        opacity:.85;
-        pointer-events:none;
-        mix-blend-mode: screen;
-      }
-
-      .mouth{
-        position:absolute;
-        left: 50%;
-        top: 56%;
-        width: 44%;
-        height: 20%;
-        transform: translate(-50%, -50%) rotate(-2deg);
-        border-radius: 999px;
-        background: rgba(25, 20, 18, .16);
-        box-shadow:
-          inset 0 8px 16px rgba(0,0,0,.12),
-          0 10px 20px rgba(0,0,0,.10);
-        opacity:.92;
-        filter: blur(.0px);
-        overflow:hidden;
-      }
-      .mouth::before{
-        content:"";
-        position:absolute;
-        inset: 14% 10%;
-        border-radius: 999px;
-        background: rgba(255,255,255,.18);
-        opacity:.65;
-        transform: translateY(-4%);
-      }
-      .mouth::after{
-        content:"";
-        position:absolute;
-        left: 18%;
-        right: 18%;
-        bottom: -40%;
-        height: 90%;
-        border-radius: 999px;
-        background: rgba(255, 110, 150, .18);
-        filter: blur(0px);
-        opacity: .85;
-        transform: rotate(2deg);
-      }
-
-      /* Swallow: blob + mouth */
-      .blob.swallowing{
-        animation:
-          blobMorph 4.8s ease-in-out infinite,
-          blobFloat 6.5s ease-in-out infinite,
-          gulp 980ms cubic-bezier(.2,.9,.18,1) 1;
-      }
-      .blob.swallowing .mouth{
-        animation: mouthOpen 980ms cubic-bezier(.2,.9,.18,1) 1;
-      }
-
-      @keyframes blobMorph{
-        0%   { border-radius: 42% 58% 55% 45% / 55% 42% 58% 45%; }
-        25%  { border-radius: 55% 45% 38% 62% / 48% 54% 46% 52%; }
-        50%  { border-radius: 46% 54% 62% 38% / 62% 44% 56% 38%; }
-        75%  { border-radius: 38% 62% 52% 48% / 44% 62% 38% 56%; }
-        100% { border-radius: 42% 58% 55% 45% / 55% 42% 58% 45%; }
-      }
-      @keyframes blobFloat{
-        0%,100% { transform: translateY(0px) scale(1.00); }
-        50%     { transform: translateY(-10px) scale(1.01); }
-      }
-      @keyframes gulp{
-        0%   { transform: translateY(0px) scale(1.00); filter: saturate(1.02); }
-        35%  { transform: translateY(-6px) scale(1.10); filter: saturate(1.12); }
-        65%  { transform: translateY(2px) scale(0.96); filter: saturate(1.05); }
-        100% { transform: translateY(0px) scale(1.00); filter: saturate(1.02); }
-      }
-      @keyframes mouthOpen{
-        0%   { transform: translate(-50%, -50%) scaleX(1) scaleY(.85) rotate(-2deg); opacity:.86; }
-        35%  { transform: translate(-50%, -50%) scaleX(1.05) scaleY(1.55) rotate(-2deg); opacity:.95; }
-        65%  { transform: translate(-50%, -50%) scaleX(.98) scaleY(.72) rotate(-2deg); opacity:.90; }
-        100% { transform: translate(-50%, -50%) scaleX(1) scaleY(.85) rotate(-2deg); opacity:.86; }
-      }
-
-      /* Skins */
-      .skin-a{
-        background:
-          radial-gradient(60% 60% at 30% 25%, rgba(255,255,255,.35), transparent 58%),
-          linear-gradient(135deg, var(--a1), var(--a2));
-      }
-      .skin-m{
-        background:
-          radial-gradient(60% 60% at 30% 25%, rgba(255,255,255,.35), transparent 58%),
-          linear-gradient(135deg, var(--m1), var(--m2));
-      }
-      .skin-e{
-        background:
-          radial-gradient(60% 60% at 30% 25%, rgba(255,255,255,.28), transparent 58%),
-          linear-gradient(135deg, var(--e1), var(--e2));
-        filter: saturate(.95);
-      }
-      .skin-ssr{
-        background:
-          radial-gradient(68% 68% at 28% 22%, rgba(255,255,255,.40), transparent 58%),
-          linear-gradient(135deg, var(--g1), var(--g2) 55%, var(--g3));
-        box-shadow:
-          0 24px 70px rgba(231, 182, 75, .22),
-          0 24px 60px rgba(24, 20, 12, .14),
-          inset 0 18px 38px rgba(255,255,255,.26);
-      }
-
-      /* SSR sparkles */
-      .sparkles{
-        position:absolute;
-        inset: -42px;
-        pointer-events:none;
-        opacity: 0;
-        transition: opacity .25s ease;
-        z-index: 3;
-      }
-      .sparkles.on{ opacity: 1; }
-      .sparkles span{
-        position:absolute;
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: radial-gradient(circle at 35% 35%, rgba(255,255,255,1), rgba(255,255,255,.0) 70%);
-        box-shadow:
-          0 0 0 0 rgba(255, 224, 160, .0),
-          0 0 16px rgba(255, 231, 180, .55);
-        filter: blur(.0px);
-        opacity: .0;
-        transform: translateZ(0);
-        animation: twinkle 1.6s ease-in-out infinite;
-        will-change: transform, opacity;
-      }
-      @keyframes twinkle{
-        0%,100%{ opacity: .05; transform: scale(.65) rotate(0deg); box-shadow: 0 0 16px rgba(255, 231, 180, .30); }
-        45%{ opacity: .95; transform: scale(1.25) rotate(18deg); box-shadow: 0 0 26px rgba(255, 231, 180, .68); }
-        65%{ opacity: .25; transform: scale(.85) rotate(-10deg); box-shadow: 0 0 18px rgba(255, 231, 180, .44); }
-      }
-
-      /* Input area */
-      .panel{
-        width: min(880px, 100%);
-        display:flex;
-        gap: 12px;
-        align-items: stretch;
-      }
-      .input{
-        flex: 1 1 auto;
-        background: rgba(255,255,255,.68);
-        border: 1px solid rgba(0,0,0,.07);
-        box-shadow: var(--shadow-soft);
-        border-radius: 18px;
-        padding: 12px 14px;
-        display:flex;
-        align-items:center;
-        gap: 10px;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-      }
-      .input .dot{
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        background: linear-gradient(135deg, rgba(255,154,196,1), rgba(255,210,224,1));
-        box-shadow: 0 8px 18px rgba(255, 146, 186, .35);
-        flex: 0 0 auto;
-      }
-      input[type="text"]{
-        width:100%;
-        border:0;
-        outline:0;
-        background: transparent;
-        font-size: 14px;
-        color: var(--ink);
-        letter-spacing: .2px;
-      }
-      input::placeholder{ color: rgba(43,42,40,.42); }
-
-      .btn{
-        flex: 0 0 auto;
-        border: 0;
-        border-radius: 18px;
-        padding: 12px 16px;
-        min-width: 122px;
-        background: var(--btn);
-        color: var(--btn-ink);
-        box-shadow: 0 14px 30px rgba(24, 20, 12, .18);
-        font-weight: 760;
-        letter-spacing: .3px;
-        cursor:pointer;
-        position: relative;
-        overflow:hidden;
-        transform: translateZ(0);
-        transition: transform .12s ease, background .18s ease, box-shadow .18s ease;
-        user-select:none;
-        -webkit-tap-highlight-color: transparent;
-      }
-      .btn:active{
-        transform: translateY(1px) scale(.99);
-        box-shadow: 0 10px 22px rgba(24, 20, 12, .16);
-      }
-      .btn:hover{ background: var(--btn-hover); }
-      .btn[disabled]{
-        cursor:not-allowed;
-        opacity:.72;
-      }
-      .btn .shine{
-        position:absolute;
-        inset:-40%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,.24), transparent);
-        transform: translateX(-40%) rotate(20deg);
-        animation: shine 2.8s ease-in-out infinite;
-        pointer-events:none;
-        opacity:.8;
-      }
-      @keyframes shine{
-        0% { transform: translateX(-55%) rotate(20deg); opacity: .0; }
-        35%{ opacity: .55; }
-        70%{ transform: translateX(55%) rotate(20deg); opacity: .0; }
-        100%{ transform: translateX(55%) rotate(20deg); opacity: .0; }
-      }
-
-      /* Flying orb */
-      .orb{
-        position: fixed;
-        left: 0; top: 0;
-        z-index: 99;
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: rgba(255,255,255,.72);
-        border: 1px solid rgba(0,0,0,.07);
-        box-shadow: 0 16px 35px rgba(24, 20, 12, .14);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        font-size: 13px;
-        color: rgba(43,42,40,.80);
-        max-width: min(72vw, 360px);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        transform: translate(-9999px, -9999px);
-        will-change: transform, opacity, filter;
-      }
-      .orb::before{
-        content:"";
-        position:absolute;
-        inset: -14px;
-        border-radius: inherit;
-        background: radial-gradient(closest-side, rgba(255, 154, 196, .20), transparent 65%);
-        filter: blur(10px);
-        opacity:.8;
-        pointer-events:none;
-        mix-blend-mode: multiply;
-      }
-
-      /* Modal (receipt / polaroid) */
-      .modal{
-        position: fixed;
-        inset: 0;
-        z-index: 200;
-        display:none;
-        align-items:center;
-        justify-content:center;
-        padding: calc(18px + var(--safeTop)) 18px calc(18px + var(--safeBottom));
-      }
-      .modal.show{ display:flex; }
-      .backdrop{
-        position:absolute;
-        inset: 0;
-        background: rgba(31, 30, 28, .22);
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-        opacity: 0;
-        animation: fadeIn .20s ease forwards;
-      }
-      @keyframes fadeIn{ to{ opacity:1; } }
-
-      .receipt{
-        position: relative;
-        width: min(420px, 92vw);
-        border-radius: 18px;
-        background: rgba(255,255,255,.86);
-        border: 1px solid rgba(0,0,0,.08);
-        box-shadow: 0 28px 80px rgba(24, 20, 12, .18);
-        transform: translateY(10px) scale(.985);
-        opacity: 0;
-        animation: pop .28s cubic-bezier(.2,.9,.2,1) forwards;
-        overflow: hidden;
-      }
-      @keyframes pop{
-        to { transform: translateY(0px) scale(1); opacity: 1; }
-      }
-
-      .tape{
-        position:absolute;
-        left: 50%;
-        top: 10px;
-        width: 120px;
-        height: 26px;
-        transform: translateX(-50%) rotate(-2deg);
-        background: rgba(255, 234, 186, .75);
-        border: 1px solid rgba(0,0,0,.06);
-        box-shadow: 0 10px 18px rgba(24,20,12,.08);
-        border-radius: 10px;
-      }
-      .tape::after{
-        content:"";
-        position:absolute;
-        inset: 0;
-        background: repeating-linear-gradient(45deg, rgba(255,255,255,.0), rgba(255,255,255,.0) 8px,
-  rgba(255,255,255,.22) 8px, rgba(255,255,255,.22) 16px);
-        border-radius: inherit;
-        opacity:.7;
-        mix-blend-mode: screen;
-      }
-
-      .receipt-inner{
-        padding: 44px 18px 16px;
-      }
-      .receipt h2{
-        margin:0 0 8px 0;
-        font-size: 14px;
-        letter-spacing: .6px;
-        color: rgba(43,42,40,.65);
-        font-weight: 780;
-        text-transform: uppercase;
-      }
-      .quote{
-        margin: 0 0 14px 0;
-        font-size: 16px;
-        line-height: 1.55;
-        font-weight: 720;
-        color: rgba(43,42,40,.92);
-      }
-      .lucky{
-        display:inline-flex;
-        align-items:center;
-        gap: 8px;
-        padding: 10px 12px;
-        border-radius: 14px;
-        background: rgba(249,245,240,.92);
-        border: 1px solid rgba(0,0,0,.06);
-        color: rgba(43,42,40,.78);
-        box-shadow: 0 12px 28px rgba(24, 20, 12, .08);
-        font-weight: 700;
-        font-size: 13px;
-      }
-      .lucky .badge{
-        width: 18px; height: 18px;
-        border-radius: 999px;
-        background: linear-gradient(135deg, rgba(130,239,199,.95), rgba(255,210,224,.95));
-        box-shadow: 0 10px 18px rgba(130,239,199,.22);
-        flex: 0 0 auto;
-      }
-
-      .footer{
-        margin-top: 14px;
-        display:flex;
-        align-items:center;
-        justify-content: space-between;
-        gap: 10px;
-        padding-top: 12px;
-        border-top: 1px dashed rgba(0,0,0,.10);
-        color: rgba(43,42,40,.58);
-        font-size: 12px;
-        letter-spacing: .3px;
-      }
-      .close{
-        border: 0;
-        background: rgba(43,42,40,.06);
-        color: rgba(43,42,40,.72);
-        border: 1px solid rgba(0,0,0,.06);
-        padding: 8px 10px;
-        border-radius: 12px;
-        cursor:pointer;
-        font-weight: 760;
-        transition: transform .12s ease, background .18s ease;
-        -webkit-tap-highlight-color: transparent;
-      }
-      .close:active{ transform: translateY(1px); }
-      .close:hover{ background: rgba(43,42,40,.085); }
-
-      /* Small helper for SSR banner */
-      .ssr-flag{
-        display:none;
-        align-items:center;
-        gap: 8px;
-        padding: 7px 10px;
-        border-radius: 999px;
-        background: rgba(255, 244, 206, .92);
-        border: 1px solid rgba(231, 182, 75, .35);
-        color: rgba(120, 80, 18, .86);
-        box-shadow: 0 14px 30px rgba(231, 182, 75, .18);
-        font-size: 12px;
-        font-weight: 820;
-        letter-spacing: .3px;
-        user-select:none;
-      }
-      .ssr-flag .star{
-        width: 12px; height: 12px;
-        background: conic-gradient(from 210deg, #fff3c7, #f5c75f, #fff3c7);
-        border-radius: 3px;
-        transform: rotate(18deg);
-        box-shadow: 0 0 18px rgba(231, 182, 75, .55);
-      }
-
-      /* Accessibility / reduced motion */
-      @media (prefers-reduced-motion: reduce){
-        .blob, .blob.swallowing, .btn .shine, .sparkles span{
-          animation: none !important;
-        }
-        .backdrop, .receipt{ animation: none !important; opacity: 1 !important; transform: none !important; }
-      }
-
-      /* Mobile fine-tuning */
-      @media (max-width: 480px){
-        h1{ font-size: 17px; }
-        .stage{ min-height: 330px; }
-        .btn{ min-width: 110px; }
-        .chip{ display:none; }
-        .hint{ font-size: 11px; }
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="bg" aria-hidden="true"></div>
-
-    <main class="wrap">
-      <header>
-        <div class="title">
-          <h1>职场坏情绪回收站 <span style="opacity:.62;font-weight:720">(Mood Recycler V3.0)</span></h1>
-          <p class="sub">把不开心丢进“软软怪”的嘴里，它会帮你消化成好运。刷出隐藏款 SSR 试试？</p>
-        </div>
-        <div class="chip" id="skinChip">盲盒皮肤：加载中…</div>
-      </header>
-
-      <section class="stage" aria-label="软软怪舞台">
-        <div class="blob-wrap">
-          <div class="sparkles" id="sparkles" aria-hidden="true"></div>
-
-          <div class="blob skin-a" id="blob" role="img" aria-label="软软怪">
-            <div class="mouth" aria-hidden="true"></div>
-          </div>
-        </div>
-
-        <div class="hint" aria-hidden="true">
-          <div>提示：<b>点按钮有震动</b>，更解压。</div>
-          <div id="ssrFlag" class="ssr-flag"><span class="star"></span>SSR 锦鲤金已出货</div>
-        </div>
-      </section>
-
-      <section class="panel" aria-label="输入区">
-        <div class="input">
-          <span class="dot" aria-hidden="true"></span>
-          <input id="text" type="text" maxlength="60" placeholder="写下你的不开心..." aria-label="写下你的不开心" />
-        </div>
-        <button class="btn" id="btn">
-          <span class="shine" aria-hidden="true"></span>
-          粉碎烦恼
-        </button>
-      </section>
-    </main>
-
-    <!-- Flying orb -->
-    <div class="orb" id="orb" aria-hidden="true"></div>
-
-    <!-- Modal -->
-    <div class="modal" id="modal" aria-hidden="true">
-      <div class="backdrop" id="backdrop"></div>
-      <div class="receipt" role="dialog" aria-modal="true" aria-label="回收结果小票">
-        <div class="tape" aria-hidden="true"></div>
-        <div class="receipt-inner">
-          <h2>MOOD RECEIPT</h2>
-          <p class="quote" id="quote">……</p>
-          <div class="lucky" id="lucky">
-            <span class="badge" aria-hidden="true"></span>
-            <span id="action">今日宜：……</span>
-          </div>
-          <div class="footer">
-            <div>FROM: 坏情绪粉碎办事处</div>
-            <button class="close" id="closeBtn">收好</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      (() => {
-        const QUOTES = [
-          "烦恼被吞掉啦！去吃点甜的压压惊。",
-          "允许自己做个废物，也是一种能力。",
-          "这点破事，配不上你今天的妆容。",
-          "已将负能量转化为好运，请查收。",
-          "摸摸头，你已经做得超级棒了！",
-          "别让烂人烂事，挡住了你的光。",
-          "天塌下来有高个子顶着，你只负责快乐。",
-          "根据能量守恒，坏运气用完了，好运马上来。",
-          "深呼吸，那个讨厌鬼已经被消化了。",
-          "下班！剩下的事明天再说。"
-        ];
-
-        const LUCKY_ACTIONS = [
-          "今日宜：全糖奶茶", "今日宜：准点下班", "今日宜：摸鱼十分钟",
-          "今日宜：买张彩票", "今日宜：拒绝加班", "今日宜：睡个好觉",
-          "今日宜：吃顿火锅", "今日宜：发呆"
-        ];
-
-        const SKINS = [
-          { key: "A", name: "标准粉 · Standard", className: "skin-a", ssr: false },
-          { key: "M", name: "薄荷绿 · Mint", className: "skin-m", ssr: false },
-          { key: "E", name: "EMO灰 · Emo", className: "skin-e", ssr: false },
-          { key: "SSR", name: "锦鲤金 · SSR隐藏款", className: "skin-ssr", ssr: true }
-        ];
-
-        const blob = document.getElementById("blob");
-        const sparkles = document.getElementById("sparkles");
-        const skinChip = document.getElementById("skinChip");
-        const ssrFlag = document.getElementById("ssrFlag");
-        const input = document.getElementById("text");
-        const btn = document.getElementById("btn");
-
-        const orb = document.getElementById("orb");
-        const modal = document.getElementById("modal");
-        const backdrop = document.getElementById("backdrop");
-        const closeBtn = document.getElementById("closeBtn");
-        const quoteEl = document.getElementById("quote");
-        const actionEl = document.getElementById("action");
-
-        let isBusy = false;
-        let currentSkinKey = null;
-
-        const rand = (n) => Math.floor(Math.random() * n);
-        const pick = (arr) => arr[rand(arr.length)];
-
-        function safeVibrate(pattern) {
-          try {
-            if (navigator.vibrate) navigator.vibrate(pattern);
-          } catch (_) {}
-        }
-
-        function buildSparkles() {
-          // Create a fixed set of sparkles for SSR mode (pure CSS animation).
-          const count = 14;
-          sparkles.innerHTML = "";
-          for (let i = 0; i < count; i++) {
-            const s = document.createElement("span");
-            const angle = (i / count) * Math.PI * 2;
-            const radius = 46 + (i % 5) * 8;
-            const cx = 50 + Math.cos(angle) * radius;
-            const cy = 50 + Math.sin(angle) * (radius * 0.78);
-            s.style.left = `${cx}%`;
-            s.style.top = `${cy}%`;
-            s.style.animationDelay = `${(Math.random() * 1.6).toFixed(2)}s`;
-            s.style.animationDuration = `${(1.25 + Math.random() * 1.2).toFixed(2)}s`;
-            s.style.width = `${6 + Math.random() * 8}px`;
-            s.style.height = s.style.width;
-            sparkles.appendChild(s);
-          }
-        }
-
-        function setSkin(skin) {
-          // Remove old classes
-          for (const s of SKINS) blob.classList.remove(s.className);
-
-          blob.classList.add(skin.className);
-          currentSkinKey = skin.key;
-
-          skinChip.textContent = `盲盒皮肤：${skin.name}`;
-          ssrFlag.style.display = skin.ssr ? "inline-flex" : "none";
-          sparkles.classList.toggle("on", !!skin.ssr);
-
-          if (skin.ssr) {
-            // SSR: extra little haptic flourish
-            safeVibrate([18, 26, 18]);
-          }
-        }
-
-        function rollSkin({ avoidSame = true } = {}) {
-          let candidates = SKINS.slice();
-          if (avoidSame && currentSkinKey) candidates = candidates.filter(s => s.key !== currentSkinKey);
-          setSkin(pick(candidates));
-        }
-
-        function showReceipt() {
-          quoteEl.textContent = pick(QUOTES);
-          actionEl.textContent = pick(LUCKY_ACTIONS);
-          modal.classList.add("show");
-          modal.removeAttribute("aria-hidden");
-          // tiny haptic “print receipt”
-          safeVibrate(12);
-        }
-
-        function hideReceipt() {
-          modal.classList.remove("show");
-          modal.setAttribute("aria-hidden", "true");
-        }
-
-        function getMouthTarget() {
-          const mouth = blob.querySelector(".mouth");
-          const r = mouth.getBoundingClientRect();
-          return { x: r.left + r.width * 0.5, y: r.top + r.height * 0.52 };
-        }
-
-        function placeOrbAtInput(text) {
-          const r = input.getBoundingClientRect();
-          orb.textContent = text;
-          // Start near right side of input to feel “thrown”
-          const startX = r.left + Math.min(r.width * 0.72, r.width - 22);
-          const startY = r.top + r.height * 0.5;
-          orb.style.transform = `translate(${startX}px, ${startY}px) translate(-50%, -50%)`;
-          orb.style.opacity = "1";
-          orb.style.filter = "blur(0px)";
-          orb.setAttribute("aria-hidden", "false");
-          return { x: startX, y: startY };
-        }
-
-        async function flyIntoMouth(text) {
-          const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-          const start = placeOrbAtInput(text);
-          const target = getMouthTarget();
-
-          const dx = target.x - start.x;
-          const dy = target.y - start.y;
-
-          // Subtle curve with WAAPI keyframes
-          const midX = dx * 0.55;
-          const midY = dy * 0.35 - 40;
-
-          const duration = prefersReduced ? 260 : 780;
-
-          const anim = orb.animate([
-            { transform: `translate(${start.x}px, ${start.y}px) translate(-50%, -50%) scale(1)`, opacity: 1, filter:
-  "blur(0px)" },
-            { transform: `translate(${start.x + midX}px, ${start.y + midY}px) translate(-50%, -50%) scale(0.98)`,
-  opacity: 0.95, offset: 0.55 },
-            { transform: `translate(${target.x}px, ${target.y}px) translate(-50%, -50%) scale(0.25)`, opacity: 0.0,
-  filter: "blur(1px)" }
-          ], {
-            duration,
-            easing: "cubic-bezier(.2,.9,.2,1)",
-            fill: "forwards"
-          });
-
-          return anim.finished.catch(() => {});
-        }
-
-        async function swallowFlow() {
-          if (isBusy) return;
-
-          const raw = (input.value || "").trim();
-          if (!raw) {
-            safeVibrate(18);
-            input.focus();
-            // quick “nope” micro shake
-            input.animate(
-              [{ transform: "translateX(0px)" }, { transform: "translateX(-6px)" }, { transform: "translateX(6px)" },
-  { transform: "translateX(0px)" }],
-              { duration: 260, easing: "ease-out" }
-            );
-            return;
-          }
-
-          isBusy = true;
-          btn.disabled = true;
-          safeVibrate(26);
-
-          const text = raw;
-          input.value = "";
-          input.blur();
-
-          // start flying orb
-          const flyPromise = flyIntoMouth(text);
-
-          // gulp sync: start slightly after orb begins moving
-          setTimeout(() => blob.classList.add("swallowing"), 120);
-
-          // end gulp class
-          setTimeout(() => blob.classList.remove("swallowing"), 1080);
-
-          await flyPromise;
-
-          // cleanup orb state
-          orb.setAttribute("aria-hidden", "true");
-          orb.style.opacity = "0";
-
-          // After swallow: roll skin again (blind box)
-          rollSkin({ avoidSame: true });
-
-          // Show receipt slightly after swallow
-          setTimeout(() => {
-            showReceipt();
-            btn.disabled = false;
-            isBusy = false;
-          }, 220);
-        }
-
-        function bind() {
-          btn.addEventListener("click", swallowFlow);
-
-          input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              swallowFlow();
-            }
-          });
-
-          closeBtn.addEventListener("click", () => {
-            safeVibrate(10);
-            hideReceipt();
-          });
-
-          backdrop.addEventListener("click", () => {
-            safeVibrate(8);
-            hideReceipt();
-          });
-
-          document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape" && modal.classList.contains("show")) hideReceipt();
-          });
-
-          // Tap the blob to “pet” it: tiny haptic + subtle bounce
-          blob.addEventListener("click", () => {
-            blob.animate(
-              [
-                { transform: "translateY(0px) scale(1.00)" },
-                { transform: "translateY(-6px) scale(1.03)" },
-                { transform: "translateY(0px) scale(1.00)" }
-              ],
-              { duration: 360, easing: "cubic-bezier(.2,.9,.2,1)" }
-            );
-            safeVibrate(8);
-          }, { passive: true });
-        }
-
-        // Init
-        buildSparkles();
-        rollSkin({ avoidSame: false });
-        bind();
-
-        // Bonus: refresh-roll hint (light haptic on first focus for mobile feel)
-        let focusedOnce = false;
-        input.addEventListener("focus", () => {
-          if (focusedOnce) return;
-          focusedOnce = true;
-          safeVibrate(8);
-        }, { passive: true });
-      })();
-    </script>
-  </body>
-  </html>
