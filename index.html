@@ -1,3 +1,355 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Mood Recycler V4.0 (赛博树洞版)</title>
+  <style>
+    :root{
+      --bg: #F9F5F0;
+      --ink: #2b2a28;
+      --muted: rgba(43,42,40,.62);
+      --radius: 18px;
+      --blob-size: min(56vw, 420px);
+      --stage-h: min(64vh, 560px);
+      --drag: cubic-bezier(.2,.9,.2,1);
+      --ssr-gold: linear-gradient(135deg,#ffd86b,#ffd045 40%,#ffef9a 70%);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family: system-ui,-apple-system,"PingFang SC","Microsoft YaHei";background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+    .wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;padding:20px;gap:14px}
+    header{width:min(960px,100%);display:flex;justify-content:space-between;align-items:center}
+    h1{margin:0;font-size:18px;font-weight:800}
+    .desc{color:var(--muted);font-size:13px}
+
+    .stage{width:min(960px,100%);height:var(--stage-h);min-height:420px;border-radius:28px;background:rgba(255,255,255,.6);box-shadow:0 18px 45px rgba(24,20,12,.08);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+
+    /* background effects for modes */
+    .rain-layer{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .45s}
+    .rain-layer.on{opacity:1}
+    .rain-layer .drop{position:absolute;width:2px;height:14px;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0));opacity:.9;border-radius:2px;transform:translateY(-120%);animation:drop 900ms linear infinite}
+    @keyframes drop{to{transform:translateY(120%);opacity:0}}
+
+    .blob-wrap{position:relative;width:var(--blob-size);height:var(--blob-size);display:grid;place-items:center;z-index:2}
+    .blob{width:88%;height:88%;border-radius:46% 54% 52% 48%/52% 46% 54% 48%;background:linear-gradient(135deg,#ff9ac4,#ffd3e3);box-shadow:0 24px 60px rgba(24,20,12,.12),inset 0 12px 28px rgba(255,255,255,.28);position:relative;transition:filter .22s,transform .22s,border-radius 1s;will-change:transform,filter;border:0}
+    .blob::after{content:"";position:absolute;inset:-26px;border-radius:inherit;background:radial-gradient(closest-side,rgba(255,255,255,.3),transparent 68%);filter:blur(12px);opacity:.9}
+    .mouth{position:absolute;left:50%;top:56%;width:40%;height:18%;transform:translate(-50%,-50%);border-radius:999px;background:rgba(25,20,18,.12);box-shadow:inset 0 8px 16px rgba(0,0,0,.12);}
+
+    /* Modes */
+    .mode-rage .blob{background:linear-gradient(135deg,#ff4d4d,#ff7676);box-shadow:0 32px 90px rgba(255,77,77,.12),inset 0 18px 36px rgba(255,255,255,.12);filter:saturate(1.1)}
+    .mode-emo{background:linear-gradient(135deg,#7FDBFF,#50BFE6);filter:brightness(.86)}
+    .mode-anx{background:linear-gradient(135deg,#FFDC00,#FFD13A);}
+
+    /* shake and breathe */
+    .blob{animation:breath 3.8s ease-in-out infinite}
+    .mode-rage .blob{animation:breath 1.6s linear infinite}
+    .mode-anx .blob{animation:breath 0.9s linear infinite}
+    @keyframes breath{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+
+    /* flames/spikes for rage */
+    .spikes{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .18s}
+    .spikes.on{opacity:1}
+    .spike{position:absolute;width:8px;height:32px;background:linear-gradient(180deg,#ff9a9a,#ff4d4d);border-radius:4px;transform-origin:center bottom;animation:spk 900ms linear infinite}
+    @keyframes spk{0%{transform:scaleY(.2);opacity:.6}50%{transform:scaleY(1);opacity:1}100%{transform:scaleY(.2);opacity:.6}}
+
+    /* SSR sparkles */
+    .ssr{position:absolute;inset:-28px;pointer-events:none;opacity:0;transition:opacity .28s}
+    .ssr.on{opacity:1}
+    .ssr .star{position:absolute;width:10px;height:10px;border-radius:2px;background:radial-gradient(circle,#fff,#ffd86b);box-shadow:0 0 18px rgba(255,216,107,.9);transform:rotate(10deg);filter:blur(.4px);animation:tw 1.6s ease-in-out infinite}
+    @keyframes tw{0%{opacity:.15;transform:scale(.8) rotate(0)}50%{opacity:1;transform:scale(1.25) rotate(18deg)}100%{opacity:.15;transform:scale(.9) rotate(-6deg)}}
+
+    /* UI */
+    .controls{width:min(960px,100%);display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .input{flex:1;display:flex;align-items:center;background:rgba(255,255,255,.78);border-radius:14px;padding:10px 12px;box-shadow:0 10px 28px rgba(24,20,12,.06);border:1px solid rgba(0,0,0,.05)}
+    input[type=text]{width:100%;border:0;background:transparent;outline:0;font-size:14px}
+    .btn{background:var(--ink);color:#fff;padding:10px 14px;border-radius:12px;border:0;cursor:pointer;font-weight:700}
+    .tog{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.9);border:1px solid rgba(0,0,0,.06);cursor:pointer}
+
+    /* modal receipt */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;z-index:60}
+    .modal.show{display:flex}
+    .backdrop{position:absolute;inset:0;background:rgba(18,18,18,.28);backdrop-filter:blur(6px)}
+    .receipt{position:relative;width:min(520px,92vw);background:rgba(255,255,255,.96);border-radius:12px;padding:22px;box-shadow:0 28px 80px rgba(24,20,12,.12);transform:translateY(8px);}
+    .receipt .title{font-weight:800;margin:0 0 8px}
+    .receipt .quote{font-size:16px;margin:0 0 12px}
+    .receipt .lucky{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(249,245,240,.9);}
+
+    /* small mobile tweaks */
+    @media(max-width:480px){.stage{min-height:360px}.blob-wrap{width:78vw;height:78vw}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div>
+        <h1>MOOD RECYCLER V4.0 <span style="font-weight:600;font-size:12px;opacity:.66">赛博树洞版</span></h1>
+        <div class="desc">五感反馈：视觉 · 触觉 · 听觉 · 情绪识别 · 连击宣泄</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div id="audioToggle" class="tog" title="声音已关闭">🔇 声音</div>
+        <div style="font-size:12px;color:var(--muted)">点击怪兽可连击发泄</div>
+      </div>
+    </header>
+
+    <section class="stage" aria-label="舞台">
+      <div class="rain-layer" id="rain"></div>
+
+      <div class="blob-wrap" id="blobWrap">
+        <div class="ssr" id="ssrLayer" aria-hidden="true"></div>
+        <div class="spikes" id="spikes"></div>
+        <div class="blob" id="blob" role="img" aria-label="软软怪" tabindex="0">
+          <div class="mouth" aria-hidden="true"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="input">
+        <input id="text" type="text" maxlength="120" placeholder="输入烦恼，或直接点击怪兽揍它..." aria-label="输入烦恼" />
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="smash">粉碎烦恼</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="backdrop" id="backdrop"></div>
+    <div class="receipt" role="dialog" aria-modal="true">
+      <h3 class="title">MOOD RECEIPT</h3>
+      <p class="quote" id="quote">...</p>
+      <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+        <div class="lucky"><span id="badge" style="width:18px;height:18px;border-radius:6px;background:linear-gradient(135deg,#ff9ac4,#82efc7);box-shadow:0 10px 18px rgba(0,0,0,.06)"></span><span id="action">今日宜：摸鱼</span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn" id="closeBtn">收好</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    // --- DOM ---
+    const blob = document.getElementById('blob');
+    const blobWrap = document.getElementById('blobWrap');
+    const text = document.getElementById('text');
+    const smashBtn = document.getElementById('smash');
+    const rain = document.getElementById('rain');
+    const spikes = document.getElementById('spikes');
+    const ssrLayer = document.getElementById('ssrLayer');
+    const audioToggle = document.getElementById('audioToggle');
+    const modal = document.getElementById('modal');
+    const backdrop = document.getElementById('backdrop');
+    const closeBtn = document.getElementById('closeBtn');
+    const quoteEl = document.getElementById('quote');
+    const badge = document.getElementById('badge');
+    const actionEl = document.getElementById('action');
+
+    // --- state ---
+    let audioEnabled = false;
+    let ctx = null;
+    let isBusy = false;
+
+    // combo system
+    let combo = 0;
+    let comboTimer = null;
+
+    // SSR chance
+    const SSR_CHANCE = 0.05;
+
+    // quotes and actions
+    const QUOTES = [
+      '烦恼已粉碎，留好心情给自己。',
+      '深呼吸，光会回来的。',
+      '别跟自己的好情绪过不去。',
+      '已将负能量转化为开小差资格。',
+      '你值得被温柔以待。'
+    ];
+    const ACTIONS = ['全糖奶茶','准时下班','摸鱼十分钟','买张彩票','睡个好觉','吃顿火锅','放空十分钟'];
+
+    // word lists
+    const RAGE = ['死','滚','傻逼','烦','老板','加班','去他妈','去TM','气死'];
+    const EMO = ['累','难过','哭','分手','孤独','没钱','好难','抑郁','委屈'];
+    const ANX = ['钱','穷','房租','买','还钱','还不起','欠'];
+
+    function safeVibrate(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+
+    // --- Audio helpers ---
+    function ensureAudio(){
+      if(ctx) return; ctx = new (window.AudioContext||window.webkitAudioContext)();
+    }
+
+    function playPop(){ if(!audioEnabled) return; ensureAudio();
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type='sine'; o.frequency.setValueAtTime(800,ctx.currentTime);
+      g.gain.setValueAtTime(0.0001,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime+0.005);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.16);
+      o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.18);
+    }
+
+    // white noise generator for shred
+    function whiteNoise(duration=1.0){
+      if(!audioEnabled) return; ensureAudio();
+      const sampleRate = ctx.sampleRate; const len = Math.floor(duration*sampleRate);
+      const buffer = ctx.createBuffer(1,len,sampleRate); const data = buffer.getChannelData(0);
+      for(let i=0;i<len;i++) data[i]=(Math.random()*2-1)*0.5;
+      const src = ctx.createBufferSource(); src.buffer = buffer;
+      const bf = ctx.createBiquadFilter(); bf.type='lowpass'; bf.frequency.setValueAtTime(1000,ctx.currentTime);
+      src.connect(bf); bf.connect(ctx.destination); src.start();
+      // fade out
+      const gain = ctx.createGain(); bf.disconnect(); bf.connect(gain); gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(1,ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      src.stop(ctx.currentTime + duration + 0.02);
+    }
+
+    function playRageHit(){ if(!audioEnabled) return; ensureAudio();
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type='sawtooth'; o.frequency.setValueAtTime(80, ctx.currentTime);
+      o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.linearRampToValueAtTime(0.6, ctx.currentTime+0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.9);
+      o.start(); o.stop(ctx.currentTime+0.95);
+    }
+
+    function playEmoDrop(){ if(!audioEnabled) return; ensureAudio();
+      const o = ctx.createOscillator(); const g = ctx.createGain(); o.type='sine';
+      const now = ctx.currentTime; o.frequency.setValueAtTime(300, now); o.frequency.exponentialRampToValueAtTime(120, now+0.8);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.45, now+0.06); g.gain.exponentialRampToValueAtTime(0.001, now+1.2);
+      o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now+1.3);
+    }
+
+    // --- visual helpers ---
+    function setMode(mode){
+      blobWrap.parentElement.classList.remove('mode-rage','mode-emo','mode-anx');
+      blobWrap.parentElement.classList.add(mode);
+      // rain
+      if(mode==='mode-emo') rain.classList.add('on'); else rain.classList.remove('on');
+      // spikes
+      if(mode==='mode-rage') spikes.classList.add('on'); else spikes.classList.remove('on');
+    }
+
+    // create rain drops and spikes
+    function buildEffects(){
+      // rain
+      rain.innerHTML=''; for(let i=0;i<40;i++){const d=document.createElement('div');d.className='drop';d.style.left=Math.random()*100+'%';d.style.animationDelay=(Math.random()*900)+'ms';d.style.height=(8+Math.random()*18)+'px';rain.appendChild(d)}
+      // spikes
+      spikes.innerHTML=''; for(let i=0;i<28;i++){const s=document.createElement('div');s.className='spike';s.style.left=(15+Math.random()*70)+'%';s.style.bottom=(4+Math.random()*30)+'%';s.style.height=(18+Math.random()*56)+'px';s.style.transform='scaleY('+ (0.5+Math.random()*1.6)+')';s.style.animationDelay=(Math.random()*800)+'ms';spikes.appendChild(s)}
+      // ssr stars
+      ssrLayer.innerHTML=''; for(let i=0;i<12;i++){const s=document.createElement('div');s.className='star';s.style.left=(10+Math.random()*80)+'%';s.style.top=(10+Math.random()*80)+'%';s.style.animationDelay=(Math.random()*1.6)+'s';ssrLayer.appendChild(s)}
+    }
+
+    buildEffects();
+
+    // --- emotion detection ---
+    function detectEmotion(input){
+      const str = (input||'').toLowerCase();
+      for(const w of RAGE) if(str.indexOf(w)!==-1) return 'mode-rage';
+      for(const w of EMO) if(str.indexOf(w)!==-1) return 'mode-emo';
+      for(const w of ANX) if(str.indexOf(w)!==-1) return 'mode-anx';
+      return '';
+    }
+
+    // live detect
+    text.addEventListener('input', ()=>{
+      const val = text.value || '';
+      const mode = detectEmotion(val);
+      if(mode) setMode(mode); else setMode('');
+      // gentle pop while typing
+      playPop(); safeVibrate(6);
+    });
+
+    // --- smash / swallow flow ---
+    function showReceipt(ssr=false){
+      quoteEl.textContent = QUOTES[Math.floor(Math.random()*QUOTES.length)];
+      actionEl.textContent = '今日宜：' + ACTIONS[Math.floor(Math.random()*ACTIONS.length)];
+      if(ssr){ ssrLayer.classList.add('on'); badge.style.background = 'var(--ssr-gold)'; }
+      else { ssrLayer.classList.remove('on'); badge.style.background = 'linear-gradient(135deg,#ff9ac4,#82efc7)'; }
+      modal.classList.add('show'); modal.removeAttribute('aria-hidden');
+      safeVibrate([12,8,12]);
+    }
+
+    function hideReceipt(){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); }
+
+    async function smashProcess(mode){
+      if(isBusy) return; isBusy=true;
+      // visual gulp
+      blob.animate([{transform:'scale(1)'},{transform:'scale(.86)'},{transform:'scale(1)'}],{duration:900,easing: 'ease-out'});
+      safeVibrate([20,30,40]);
+      // audio based on mode
+      if(mode==='mode-rage'){ playRageHit(); whiteNoise(0.9); }
+      else if(mode==='mode-emo'){ playEmoDrop(); }
+      else if(mode==='mode-anx'){ whiteNoise(0.7); }
+      else { whiteNoise(0.5); }
+
+      // small delay to feel the effect
+      await new Promise(r=>setTimeout(r,850));
+
+      const ssr = Math.random() < SSR_CHANCE;
+      // screen shake
+      const root = document.documentElement;
+      const shake = root.animate([{transform:'translateY(0px)'},{transform:'translateY(-8px)'},{transform:'translateY(6px)'},{transform:'translateY(0px)'}],{duration:600,iterations:1});
+      shake.onfinish = ()=>{};
+
+      showReceipt(ssr);
+      isBusy=false;
+    }
+
+    // button click
+    smashBtn.addEventListener('click', ()=>{
+      safeVibrate(18);
+      const mode = detectEmotion(text.value||'');
+      smashProcess(mode);
+    });
+
+    // modal handlers
+    closeBtn.addEventListener('click', ()=>{ safeVibrate(8); hideReceipt(); });
+    backdrop.addEventListener('click', ()=>{ safeVibrate(8); hideReceipt(); });
+
+    // --- combo click system ---
+    blob.addEventListener('click', (e)=>{
+      // enable audio on first user gesture
+      if(!audioEnabled){ /* keep audio disabled until explicitly toggled */ }
+      safeVibrate(6);
+      combo++;
+      // visual feedback
+      if(combo<6){ blob.animate([{transform:'scale(1)'},{transform:'scale(.92)'},{transform:'scale(1)'}],{duration:160}); playPop(); }
+      else if(combo<21){ blob.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:220}); playRageHit(); }
+      else { // explosion
+        const mode = detectEmotion(text.value||'') || 'mode-rage';
+        smashProcess(mode);
+        combo = 0;
+      }
+
+      if(comboTimer) clearTimeout(comboTimer);
+      comboTimer = setTimeout(()=>{ combo = 0; }, 1600);
+    });
+
+    // audio toggle
+    audioToggle.addEventListener('click', async ()=>{
+      // on first enabling, create/resume AudioContext
+      if(!audioEnabled){
+        try{ ensureAudio(); await ctx.resume(); audioEnabled=true; audioToggle.textContent='🔊 声音'; audioToggle.title='声音已开启'; }
+        catch(e){ console.warn('audio err',e); }
+      } else { audioEnabled=false; audioToggle.textContent='🔇 声音'; audioToggle.title='声音已关闭'; }
+      safeVibrate(10);
+    });
+
+    // keyboard: Enter to smash
+    text.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); smashBtn.click(); } });
+
+    // accessibility: focus on blob activates small nudge
+    blob.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); blob.click(); } });
+
+    // init: gentle greeting
+    text.placeholder = '输入烦恼，或直接点击怪兽揍它...';
+    setTimeout(()=>{ blob.animate([{transform:'scale(.98)'},{transform:'scale(1)'},{transform:'scale(.99)'}],{duration:1200,iterations:2}); },400);
+  })();
+  </script>
+</body>
+</html>
 
 • <!doctype html>
   <html lang="zh-CN">
